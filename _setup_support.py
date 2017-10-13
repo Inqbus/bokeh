@@ -136,7 +136,7 @@ def build_or_install_bokehjs():
         jsbuild = False
         sys.argv.remove('--install-js')
 
-    jsbuild_ok = ('install', 'develop', 'sdist', 'egg_info', 'build')
+    jsbuild_ok = ('install', 'develop', 'sdist', 'egg_info', 'build', 'bdist_wheel1')
     if jsbuild and not any(arg in sys.argv for arg in jsbuild_ok):
         print("Error: Option '--build-js' only valid with 'install', 'develop', 'sdist', or 'build', exiting.")
         sys.exit(1)
