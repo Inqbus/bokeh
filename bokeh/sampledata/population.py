@@ -17,8 +17,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 log = logging.getLogger(__name__)
 
-from bokeh.util.api import public, internal ; public, internal
-
 #-----------------------------------------------------------------------------
 # Imports
 #-----------------------------------------------------------------------------
@@ -28,7 +26,6 @@ from bokeh.util.api import public, internal ; public, internal
 # External imports
 
 # Bokeh imports
-from ..util.deprecation import deprecated
 from ..util.sampledata import external_csv
 
 #-----------------------------------------------------------------------------
@@ -40,19 +37,11 @@ __all__ = (
 )
 
 #-----------------------------------------------------------------------------
-# Public API
+# General API
 #-----------------------------------------------------------------------------
 
-
-def load_population():
-    '''
-
-    '''
-    deprecated((0, 12, 10), 'bokeh.sampledata.population.load_population()', 'bokeh.sampledata.population.data')
-    return data
-
 #-----------------------------------------------------------------------------
-# Internal API
+# Dev API
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------

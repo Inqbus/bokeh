@@ -13,9 +13,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import pytest ; pytest
 
-from bokeh.util.api import INTERNAL, PUBLIC ; INTERNAL, PUBLIC
-from bokeh.util.testing import verify_api ; verify_api
-
 #-----------------------------------------------------------------------------
 # Imports
 #-----------------------------------------------------------------------------
@@ -31,43 +28,15 @@ from bokeh.model import Model
 import bokeh.embed.util as beu
 
 #-----------------------------------------------------------------------------
-# API Definition
-#-----------------------------------------------------------------------------
-
-api = {
-
-    PUBLIC: (
-
-    ), INTERNAL: (
-
-        ( 'FromCurdoc',                            (1,0,0) ),
-        ( 'check_models_or_docs',                  (1,0,0) ),
-        ( 'check_one_model_or_doc',                (1,0,0) ),
-        ( 'div_for_render_item',                   (1,0,0) ),
-        ( 'find_existing_docs',                    (1,0,0) ),
-        ( 'html_page_for_render_items',            (1,0,0) ),
-        ( 'script_for_render_items',               (1,0,0) ),
-        ( 'standalone_docs_json_and_render_items', (1,0,0) ),
-        ( 'wrap_in_onload',                        (1,0,0) ),
-        ( 'wrap_in_safely',                        (1,0,0) ),
-        ( 'wrap_in_script_tag',                    (1,0,0) ),
-
-    )
-
-}
-
-Test_api = verify_api(beu, api)
-
-#-----------------------------------------------------------------------------
 # Setup
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-# Public API
+# General API
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-# Internal API
+# Dev API
 #-----------------------------------------------------------------------------
 
 class Test_FromCurdoc(object):
@@ -125,7 +94,7 @@ class Test_wrap_in_onload(object):
   };
   if (document.readyState != "loading") fn();
   else document.addEventListener("DOMContentLoaded", fn);
-})();
+})();\
 """
 
 class Test_wrap_in_safely(object):
@@ -135,16 +104,18 @@ class Test_wrap_in_safely(object):
 Bokeh.safely(function() {
   code
   morecode
-});"""
+});\
+"""
 
 class Test_wrap_in_script_tag(object):
 
     def test_render(self):
         assert beu.wrap_in_script_tag("code\nmorecode") == """
 <script type="text/javascript">
-    code
-morecode
-</script>"""
+  code
+  morecode
+</script>\
+"""
 
 #-----------------------------------------------------------------------------
 # Private API
@@ -158,11 +129,11 @@ def test__ONLOAD():
   };
   if (document.readyState != "loading") fn();
   else document.addEventListener("DOMContentLoaded", fn);
-})();
+})();\
 """
 
 def test__SAFELY():
     assert beu._SAFELY == """\
 Bokeh.safely(function() {
 %(code)s
-});"""
+});"""\

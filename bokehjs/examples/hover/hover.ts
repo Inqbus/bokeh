@@ -14,8 +14,8 @@ namespace HoverfulScatter {
   })()
 
   const M = 100
-  const xx: Array<number> = []
-  const yy: Array<number> = []
+  const xx: number[] = []
+  const yy: number[] = []
 
   for (let y = 0; y <= M; y += 4) {
     for (let x = 0; x <= M; x += 4) {
@@ -28,12 +28,12 @@ namespace HoverfulScatter {
   const indices = range(N).map((i) => i.toString())
   const radii = range(N).map((_) => random()*0.4 + 1.7)
 
-  const colors: Array<string> = []
+  const colors: string[] = []
   for (const [r, g] of zip(xx.map((x) => 50 + 2*x), yy.map((y) => 30 + 2*y)))
     colors.push(plt.color(r, g, 150))
 
   const source = new Bokeh.ColumnDataSource({
-    data: {x: xx, y: yy, radius: radii, colors: colors }
+    data: {x: xx, y: yy, radius: radii, colors: colors },
   })
 
   const tools = "pan,crosshair,wheel_zoom,box_zoom,reset,hover,save"
@@ -47,7 +47,7 @@ namespace HoverfulScatter {
     text_font_size: "5pt", text_baseline: "middle", text_align: "center"})
 
   const hover = p.toolbar.select_one(Bokeh.HoverTool)
-  hover.tooltips = (source, info) => {
+  hover.tooltips = (source: Bokeh.DataSource, info: Bokeh.HoverTooltipInfo) => {
     const ds = source as Bokeh.ColumnDataSource
     const div = document.createElement("div")
     div.style.width = "200px"

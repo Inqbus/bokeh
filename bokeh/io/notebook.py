@@ -17,8 +17,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 log = logging.getLogger(__name__)
 
-from bokeh.util.api import public, internal ; public, internal
-
 #-----------------------------------------------------------------------------
 # Imports
 #-----------------------------------------------------------------------------
@@ -47,10 +45,9 @@ LOAD_MIME_TYPE = 'application/vnd.bokehjs_load.v0+json'
 EXEC_MIME_TYPE = 'application/vnd.bokehjs_exec.v0+json'
 
 #-----------------------------------------------------------------------------
-# Public API
+# General API
 #-----------------------------------------------------------------------------
 
-@public((1,0,0))
 class CommsHandle(object):
     '''
 
@@ -83,12 +80,10 @@ class CommsHandle(object):
             return "<p><code>&lt;Bokeh Notebook handle&gt;</code></p>"
 
     @property
-    @internal((1,0,0))
     def comms(self):
         return self._comms
 
     @property
-    @internal((1,0,0))
     def doc(self):
         return self._doc
 
@@ -101,7 +96,6 @@ class CommsHandle(object):
         if event.model._id in self.doc._all_models:
             self.doc._trigger_on_change(event)
 
-@public((1,0,0))
 def install_notebook_hook(notebook_type, load, show_doc, show_app, overwrite=False):
     ''' Install a new notebook display hook.
 
@@ -180,7 +174,6 @@ def install_notebook_hook(notebook_type, load, show_doc, show_app, overwrite=Fal
         raise RuntimeError("hook for notebook type %r already exists" % notebook_type)
     _HOOKS[notebook_type] = dict(load=load, doc=show_doc, app=show_app)
 
-@public((1,0,0))
 def push_notebook(document=None, state=None, handle=None):
     ''' Update Bokeh plots in a Jupyter notebook output cells with new data
     or property values.
@@ -250,6 +243,13 @@ def push_notebook(document=None, state=None, handle=None):
         return
 
     events = list(handle.doc._held_events)
+
+    # This is to avoid having an exception raised for attempting to create a
+    # PATCH-DOC with no events. In the notebook, we just want to silenty
+    # ignore calls to push_notebook when there are no new events
+    if len(events) == 0:
+        return
+
     handle.doc._held_events = []
     msg = Protocol("1.0").create("PATCH-DOC", events)
 
@@ -260,7 +260,6 @@ def push_notebook(document=None, state=None, handle=None):
         handle.comms.send(json.dumps(header))
         handle.comms.send(buffers=[payload])
 
-@public((1,0,0))
 def run_notebook_hook(notebook_type, action, *args, **kw):
     ''' Run an installed notebook hook with supplied arguments.
 
@@ -289,10 +288,9 @@ def run_notebook_hook(notebook_type, action, *args, **kw):
     return _HOOKS[notebook_type][action](*args, **kw)
 
 #-----------------------------------------------------------------------------
-# Internal API
+# Dev API
 #-----------------------------------------------------------------------------
 
-@internal((1,0,0))
 def destroy_server(server_id):
     ''' Given a UUID id of a div removed or replaced in the Jupyter
     notebook, destroy the corresponding server sessions and stop it.
@@ -312,7 +310,6 @@ def destroy_server(server_id):
     except Exception as e:
         log.debug("Could not destroy server for id %r: %s" % (server_id, e))
 
-@internal((1,0,0))
 def get_comms(target_name):
     ''' Create a Jupyter comms object for a specific target, that can
     be used to update Bokeh documents in the Jupyter notebook.
@@ -328,14 +325,12 @@ def get_comms(target_name):
     from ipykernel.comm import Comm
     return Comm(target_name=target_name, data={})
 
-@internal((1,0,0))
 def install_jupyter_hooks():
     '''
 
     '''
     install_notebook_hook('jupyter', load_notebook, show_doc, show_app)
 
-@internal((1,0,0))
 def load_notebook(resources=None, verbose=False, hide_banner=False, load_timeout=5000):
     ''' Prepare the IPython notebook for displaying Bokeh plots.
 
@@ -413,7 +408,6 @@ def load_notebook(resources=None, verbose=False, hide_banner=False, load_timeout
         LOAD_MIME_TYPE : jl_js
     })
 
-@internal((1,0,0))
 def publish_display_data(*args, **kw):
     '''
 
@@ -422,16 +416,32 @@ def publish_display_data(*args, **kw):
     from IPython.display import publish_display_data
     return publish_display_data(*args, **kw)
 
-@internal((1,0,0))
-def show_app(app, state, notebook_url):
+def show_app(app, state, notebook_url, port=0):
     ''' Embed a Bokeh serer application in a Jupyter Notebook output cell.
 
     Args:
-        app (Application) :
+        app (Application or callable) :
+            A Bokeh Application to embed inline in a Jupyter notebook.
 
         state (State) :
+            ** Unused **
 
-        notebook_url (str) :
+        notebook_url (str or callable) :
+            The URL of the notebook server that is running the embedded app.
+
+            If ``notebook_url`` is a string, the value string is parsed to
+            construct the origin and full server URLs.
+
+            If notebook_url is a callable, it must accept one parameter,
+            which will be the server port, or None. If passed a port,
+            the callable must generate the server URL, otherwise if passed
+            None, it must generate the origin URL for the server.
+
+        port (int) :
+            A port for the embedded server will listen on.
+
+            By default the port is 0, which results in the server listening
+            on a random dynamic port.
 
     Returns:
         None
@@ -444,17 +454,28 @@ def show_app(app, state, notebook_url):
 
     loop = IOLoop.current()
 
-    origin = _origin_url(notebook_url)
-    server = Server({"/": app}, io_loop=loop, port=0,  allow_websocket_origin=[origin])
+    if callable(notebook_url):
+        origin = notebook_url(None)
+    else:
+        origin = _origin_url(notebook_url)
+
+    server = Server({"/": app}, io_loop=loop, port=port,  allow_websocket_origin=[origin])
 
     server_id = uuid4().hex
     curstate().uuid_to_server[server_id] = server
 
     server.start()
-    url = _server_url(notebook_url, server.port)
+
+    if callable(notebook_url):
+        url = notebook_url(server.port)
+    else:
+        url = _server_url(notebook_url, server.port)
+
+    logging.debug("Server URL is %s" % url)
+    logging.debug("Origin URL is %s" % origin)
 
     from ..embed import server_document
-    script = server_document(url)
+    script = server_document(url, resources=None)
 
     publish_display_data({
         HTML_MIME_TYPE: script,
@@ -463,7 +484,6 @@ def show_app(app, state, notebook_url):
         EXEC_MIME_TYPE: {"server_id": server_id}
     })
 
-@internal((1,0,0))
 def show_doc(obj, state, notebook_handle):
     '''
 

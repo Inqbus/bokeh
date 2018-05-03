@@ -17,8 +17,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 log = logging.getLogger(__name__)
 
-from bokeh.util.api import public, internal ; public, internal
-
 #-----------------------------------------------------------------------------
 # Imports
 #-----------------------------------------------------------------------------
@@ -45,10 +43,9 @@ __all__ = (
 )
 
 #-----------------------------------------------------------------------------
-# Public API
+# General API
 #-----------------------------------------------------------------------------
 
-@public((1,0,0))
 def download(progress=True):
     ''' Download larger data sets for various Bokeh examples.
 
@@ -83,10 +80,9 @@ def download(progress=True):
         _download_file(base_url, filename, data_dir, progress=progress)
 
 #-----------------------------------------------------------------------------
-# Internal API
+# Dev API
 #-----------------------------------------------------------------------------
 
-@internal((1,0,0))
 def external_csv(module, name, **kw):
     '''
 
@@ -94,7 +90,6 @@ def external_csv(module, name, **kw):
     pd = import_required('pandas', '%s sample data requires Pandas (http://pandas.pydata.org) to be installed' % module)
     return pd.read_csv(external_path(name), **kw)
 
-@internal((1,0,0))
 def external_data_dir(create=False):
     '''
 
@@ -127,7 +122,6 @@ def external_data_dir(create=False):
 
     return data_dir
 
-@internal((1,0,0))
 def external_path(filename):
     data_dir = external_data_dir()
     fn = join(data_dir, filename)
@@ -135,7 +129,6 @@ def external_path(filename):
         raise RuntimeError('Could not locate external data file %e. Please execute bokeh.sampledata.download()' % fn)
     return fn
 
-@internal((1,0,0))
 def package_csv(module, name, **kw):
     '''
 
@@ -144,21 +137,18 @@ def package_csv(module, name, **kw):
     return pd.read_csv(package_path(name), **kw)
 
 
-@internal((1,0,0))
 def package_dir():
     '''
 
     '''
     return abspath(join(dirname(__file__), "..", "sampledata", "_data"))
 
-@internal((1,0,0))
 def package_path(filename):
     '''
 
     '''
     return join(package_dir(), filename)
 
-@internal((1,0,0))
 def open_csv(filename):
     '''
 

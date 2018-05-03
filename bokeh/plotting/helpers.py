@@ -12,13 +12,15 @@ import sys
 from six import string_types, reraise
 
 from ..models import (
-    BoxSelectTool, BoxZoomTool, CategoricalAxis,
+    BoxSelectTool, BoxZoomTool, CategoricalAxis, MercatorAxis,
     TapTool, CrosshairTool, DataRange1d, DatetimeAxis,
     FactorRange, Grid, HelpTool, HoverTool, LassoSelectTool, Legend, LegendItem, LinearAxis,
     LogAxis, PanTool, ZoomInTool, ZoomOutTool, PolySelectTool, ContinuousTicker,
     SaveTool, Range, Range1d, UndoTool, RedoTool, ResetTool, Tool,
     WheelPanTool, WheelZoomTool, ColumnarDataSource, ColumnDataSource,
-    LogScale, LinearScale, CategoricalScale, Circle, MultiLine)
+    LogScale, LinearScale, CategoricalScale, Circle, MultiLine,
+    BoxEditTool, PointDrawTool, PolyDrawTool, PolyEditTool)
+from bokeh.models.markers import Marker
 from ..models.renderers import GlyphRenderer
 
 from ..core.properties import ColorSpec, Datetime, value, field
@@ -245,7 +247,7 @@ def _get_legend_item_label(kwargs):
             # Do the simple thing first
             legend_item_label = value(legend)
             # But if there's a source - try and do something smart
-            if source and hasattr(source, 'column_names'):
+            if source is not None and hasattr(source, 'column_names'):
                 if legend in source.column_names:
                     legend_item_label = field(legend)
         else:
@@ -264,7 +266,7 @@ Pass all data directly as literals:
 Or, put all data in a ColumnDataSource and pass column names:
 
     source = ColumnDataSource(data=dict(x=a_list, y=an_array))
-    p.circe(x='x', y='x', source=source, ...)
+    p.circe(x='x', y='y', source=source, ...)
 
 """
 
@@ -356,7 +358,7 @@ def _get_range(range_input):
 
 
 def _get_scale(range_input, axis_type):
-    if isinstance(range_input, (DataRange1d, Range1d)) and axis_type in ["linear", "datetime", "auto", None]:
+    if isinstance(range_input, (DataRange1d, Range1d)) and axis_type in ["linear", "datetime", "mercator", "auto", None]:
         return LinearScale()
     elif isinstance(range_input, (DataRange1d, Range1d)) and axis_type == "log":
         return LogScale()
@@ -366,26 +368,28 @@ def _get_scale(range_input, axis_type):
         raise ValueError("Unable to determine proper scale for: '%s'" % str(range_input))
 
 
-def _get_axis_class(axis_type, range_input):
+def _get_axis_class(axis_type, range_input, dim):
     if axis_type is None:
-        return None
+        return None, {}
     elif axis_type == "linear":
-        return LinearAxis
+        return LinearAxis, {}
     elif axis_type == "log":
-        return LogAxis
+        return LogAxis, {}
     elif axis_type == "datetime":
-        return DatetimeAxis
+        return DatetimeAxis, {}
+    elif axis_type == "mercator":
+        return MercatorAxis, {'dimension': 'lon' if dim == 0 else 'lat'}
     elif axis_type == "auto":
         if isinstance(range_input, FactorRange):
-            return CategoricalAxis
+            return CategoricalAxis, {}
         elif isinstance(range_input, Range1d):
             try:
                 # Easier way to validate type of Range1d parameters
                 Datetime.validate(Datetime(), range_input.start)
-                return DatetimeAxis
+                return DatetimeAxis, {}
             except ValueError:
                 pass
-        return LinearAxis
+        return LinearAxis, {}
     else:
         raise ValueError("Unrecognized axis_type: '%r'" % axis_type)
 
@@ -406,6 +410,8 @@ _known_tools = {
     "pan": lambda: PanTool(dimensions='both'),
     "xpan": lambda: PanTool(dimensions='width'),
     "ypan": lambda: PanTool(dimensions='height'),
+    "xwheel_pan": lambda: WheelPanTool(dimension="width"),
+    "ywheel_pan": lambda: WheelPanTool(dimension="height"),
     "wheel_zoom": lambda: WheelZoomTool(dimensions='both'),
     "xwheel_zoom": lambda: WheelZoomTool(dimensions='width'),
     "ywheel_zoom": lambda: WheelZoomTool(dimensions='height'),
@@ -415,8 +421,6 @@ _known_tools = {
     "zoom_out": lambda: ZoomOutTool(dimensions='both'),
     "xzoom_out": lambda: ZoomOutTool(dimensions='width'),
     "yzoom_out": lambda: ZoomOutTool(dimensions='height'),
-    "xwheel_pan": lambda: WheelPanTool(dimension="width"),
-    "ywheel_pan": lambda: WheelPanTool(dimension="height"),
     "click": lambda: TapTool(behavior="inspect"),
     "tap": lambda: TapTool(),
     "crosshair": lambda: CrosshairTool(),
@@ -431,7 +435,7 @@ _known_tools = {
     "hover": lambda: HoverTool(tooltips=[
         ("index", "$index"),
         ("data (x, y)", "($x, $y)"),
-        ("canvas (x, y)", "($sx, $sy)"),
+        ("screen (x, y)", "($sx, $sy)"),
     ]),
     "save": lambda: SaveTool(),
     "previewsave": "save",
@@ -439,6 +443,10 @@ _known_tools = {
     "redo": lambda: RedoTool(),
     "reset": lambda: ResetTool(),
     "help": lambda: HelpTool(),
+    "box_edit": lambda: BoxEditTool(),
+    "point_draw": lambda: PointDrawTool(),
+    "poly_draw": lambda: PolyDrawTool(),
+    "poly_edit": lambda: PolyEditTool()
 }
 
 
@@ -463,19 +471,11 @@ def _tool_from_string(name):
 
 
 def _process_axis_and_grid(plot, axis_type, axis_location, minor_ticks, axis_label, rng, dim):
-    axiscls = _get_axis_class(axis_type, rng)
+    axiscls, axiskw = _get_axis_class(axis_type, rng, dim)
     if axiscls:
 
-        if axiscls is LogAxis:
-            if dim == 0:
-                plot.x_scale = LogScale()
-            elif dim == 1:
-                plot.y_scale = LogScale()
-            else:
-                raise ValueError("received invalid dimension value: %r" % dim)
-
         # this is so we can get a ticker off the axis, even if we discard it
-        axis = axiscls(plot=plot if axis_location else None)
+        axis = axiscls(plot=plot if axis_location else None, **axiskw)
 
         if isinstance(axis.ticker, ContinuousTicker):
             axis.ticker.num_minor_ticks = _get_num_minor_ticks(axiscls, minor_ticks)
@@ -634,7 +634,7 @@ def _get_sigfunc(func_name, func, argspecs):
 _arg_template = """    %s (%s) : %s
         (default: %r)
 """
-_doc_template = """ Configure and add %s glyphs to this Figure.
+_doc_template = """ Configure and add :class:`~bokeh.models.%s.%s` glyphs to this Figure.
 
 Args:
 %s
@@ -660,7 +660,7 @@ Returns:
 """
 
 def _add_sigfunc_info(func, argspecs, glyphclass, extra_docs):
-    func.__name__ = glyphclass.__name__.lower()
+    func.__name__ = glyphclass.__name__
 
     omissions = {'js_event_callbacks', 'js_property_callbacks', 'subscribed_events'}
 
@@ -686,7 +686,8 @@ def _add_sigfunc_info(func, argspecs, glyphclass, extra_docs):
     for arg, spec in argspecs.items():
         arglines.append(_arg_template % (arg, spec['type'], spec['desc'], spec['default']))
 
-    func.__doc__ = _doc_template % (func.__name__, "\n".join(arglines), "\n".join(kwlines))
+    mod = "markers" if issubclass(glyphclass, Marker) else "glyphs"
+    func.__doc__ = _doc_template % (mod, func.__name__, "\n".join(arglines), "\n".join(kwlines))
     if extra_docs:
         func.__doc__ += extra_docs
 
@@ -694,26 +695,34 @@ def _glyph_function(glyphclass, extra_docs=None):
 
     def func(self, **kwargs):
 
+        # Convert data source, if necesary
+        is_user_source = kwargs.get('source', None) is not None
+        if is_user_source:
+            source = kwargs['source']
+            if not isinstance(source, ColumnarDataSource):
+                try:
+                    # try converting the soruce to ColumnDataSource
+                    source = ColumnDataSource(source)
+                except ValueError as err:
+                    msg = "Failed to auto-convert {curr_type} to ColumnDataSource.\n Original error: {err}".format(
+                        curr_type=str(type(source)),
+                        err=err.message
+                    )
+                    reraise(ValueError, ValueError(msg), sys.exc_info()[2])
+
+                # update reddered_kws so that others can use the new source
+                kwargs['source'] = source
+
         # Process legend kwargs and remove legend before we get going
         legend_item_label = _get_legend_item_label(kwargs)
 
         # Need to check if user source is present before _pop_renderer_args
-        is_user_source = kwargs.get('source', None) is not None
         renderer_kws = _pop_renderer_args(kwargs)
         source = renderer_kws['data_source']
-        if not isinstance(source, ColumnarDataSource):
-            try:
-                # try converting the soruce to ColumnDataSource
-                source = ColumnDataSource(source)
-            except ValueError as err:
-                msg = "Failed to auto-convert {curr_type} to ColumnDataSource.\n Original error: {err}".format(
-                    curr_type=str(type(source)),
-                    err=err.message
-                )
-                reraise(ValueError, ValueError(msg), sys.exc_info()[2])
 
-            # update reddered_kws so that others can use the new source
-            renderer_kws['data_source'] = source
+        # Assign global_alpha from alpha if glyph type is an image
+        if 'alpha' in kwargs and glyphclass.__name__ in ('Image', 'ImageRGBA', 'ImageURL'):
+            kwargs['global_alpha'] = kwargs['alpha']
 
         # handle the main glyph, need to process literals
         glyph_ca = _pop_colors_and_alpha(glyphclass, kwargs)
@@ -756,9 +765,6 @@ def _glyph_function(glyphclass, extra_docs=None):
 
         if legend_item_label:
             _update_legend(self, legend_item_label, glyph_renderer)
-
-        for tool in self.select(type=BoxSelectTool):
-            tool.renderers.append(glyph_renderer)
 
         self.renderers.append(glyph_renderer)
 

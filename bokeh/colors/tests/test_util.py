@@ -13,9 +13,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import pytest ; pytest
 
-from bokeh.util.api import INTERNAL, PUBLIC ; INTERNAL, PUBLIC
-from bokeh.util.testing import verify_api ; verify_api
-
 #-----------------------------------------------------------------------------
 # Imports
 #-----------------------------------------------------------------------------
@@ -31,26 +28,6 @@ from bokeh.colors import named
 import bokeh.colors.util as bcu
 
 #-----------------------------------------------------------------------------
-# API Definition
-#-----------------------------------------------------------------------------
-
-api = {
-
-    PUBLIC: (
-
-    ), INTERNAL: (
-
-        ( 'ColorGroup' ,        (1, 0, 0) ),
-        ( 'NamedColor' ,        (1, 0, 0) ),
-        ( 'NamedColor.to_css' , (1, 0, 0) ),
-
-    )
-
-}
-
-Test_api = verify_api(bcu, api)
-
-#-----------------------------------------------------------------------------
 # Setup
 #-----------------------------------------------------------------------------
 
@@ -59,11 +36,11 @@ class _TestGroup(bcu.ColorGroup):
 
 
 #-----------------------------------------------------------------------------
-# Public API
+# General API
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-# Internal API
+# Dev API
 #-----------------------------------------------------------------------------
 
 class Test_NamedColor(object):

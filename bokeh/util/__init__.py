@@ -48,6 +48,12 @@ functionality.
 .. automodule:: bokeh.util.future
   :members:
 
+``bokeh.util.hex``
+------------------
+
+.. automodule:: bokeh.util.hex
+  :members:
+
 .. _bokeh.util.logconfig:
 
 ``bokeh.util.logconfig``
@@ -70,14 +76,6 @@ functionality.
 --------------------
 
 .. automodule:: bokeh.util.paths
-  :members:
-
-.. _bokeh.util.platform:
-
-``bokeh.util.platform``
------------------------
-
-.. automodule:: bokeh.util.platform
   :members:
 
 .. _bokeh.util.plot_utils:

@@ -2,10 +2,41 @@ import * as gulp from "gulp"
 import * as gutil from "gulp-util"
 import * as through from "through2"
 import * as cp from "child_process"
+import chalk from "chalk"
 import {argv} from "yargs"
 
 import * as paths from "../paths"
 import {buildWatchTask} from "../utils"
+
+import {join} from "path"
+const ts = require('gulp-typescript')
+
+gulp.task("test:compile", () => {
+  let n_errors = 0
+
+  function error(err: {message: string}) {
+    gutil.log(err.message)
+    n_errors++
+  }
+
+  const project = ts.createProject("./test/tsconfig.json")
+  const compiler = project
+    .src()
+    .pipe(project(ts.reporter.nullReporter()).on("error", error))
+
+  const result = compiler
+    .js
+    .pipe(gulp.dest(join("./build", "test")))
+
+  result.on("finish", function() {
+    if (argv.emitError && n_errors > 0) {
+      gutil.log(`There were ${chalk.red("" + n_errors)} TypeScript errors.`)
+      process.exit(1)
+    }
+  })
+
+  return result
+})
 
 function mocha(options: {coverage?: boolean} = {}) {
   const files: string[] = []
@@ -28,7 +59,7 @@ function mocha(options: {coverage?: boolean} = {}) {
         args.unshift("debug")
 
       args = args.concat(
-        ["--compilers", "coffee:coffee-script/register,ts:./ts-node/register"],
+        ["--compilers", "coffee:coffeescript/register,ts:./ts-node/register"],
         ["--reporter", argv.reporter || "spec"],
         ["--slow", "5s"],
         ["./test/index.coffee"],
@@ -37,7 +68,7 @@ function mocha(options: {coverage?: boolean} = {}) {
 
       const env = Object.assign({}, process.env, {
         TS_NODE_PROJECT: "./test/tsconfig.json",
-        NODE_PATH: paths.build_dir.tree_js,
+        NODE_PATH: paths.build_dir.tree,
       })
 
       const proc = cp.spawn(process.execPath, args, {stdio: 'inherit', env: env})

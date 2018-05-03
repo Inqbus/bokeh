@@ -60,9 +60,11 @@ class HookTestHandler(Handler):
 
         server_context.add_next_tick_callback(self.on_next_tick_server)
         server_context.add_timeout_callback(self.on_timeout_server, 2)
-        server_context.add_periodic_callback(self.on_periodic_server, 3)
+        periodic_cb_id = server_context.add_periodic_callback(self.on_periodic_server, 3)
+
         def remover():
-            server_context.remove_periodic_callback(self.on_periodic_server)
+            server_context.remove_periodic_callback(periodic_cb_id)
+
         self.server_periodic_remover = remover
 
     def on_server_unloaded(self, server_context):
@@ -92,9 +94,11 @@ class HookTestHandler(Handler):
         server_context = session_context.server_context
         server_context.add_next_tick_callback(self.on_next_tick_session)
         server_context.add_timeout_callback(self.on_timeout_session, 2)
-        server_context.add_periodic_callback(self.on_periodic_session, 3)
+        periodic_cb_id = server_context.add_periodic_callback(self.on_periodic_session, 3)
+
         def remover():
-            server_context.remove_periodic_callback(self.on_periodic_session)
+            server_context.remove_periodic_callback(periodic_cb_id)
+
         self.session_periodic_remover = remover
 
         self.hooks.append("session_created")
@@ -143,8 +147,7 @@ def test__lifecycle_hooks():
         def check_done():
             if len(handler.hooks) == 4:
                 server.io_loop.stop()
-        server_load_checker = PeriodicCallback(check_done, 1,
-                                               io_loop=server.io_loop)
+        server_load_checker = PeriodicCallback(check_done, 1)
         server_load_checker.start()
         server.io_loop.start()
         server_load_checker.stop()
@@ -159,6 +162,11 @@ def test__lifecycle_hooks():
         server_session = server.get_session('/', client_session.id)
         server_doc = server_session.document
         assert len(server_doc.roots) == 1
+
+        # we have to capture these here for examination later, since after
+        # the session is closed, doc.roots will be emptied
+        client_hook_list = client_doc.roots[0]
+        server_hook_list = server_doc.roots[0]
 
         client_session.close()
         # expire the session quickly rather than after the
@@ -184,8 +192,6 @@ def test__lifecycle_hooks():
                              "session_destroyed",
                              "server_unloaded"]
 
-    client_hook_list = client_doc.roots[0]
-    server_hook_list = server_doc.roots[0]
     assert handler.load_count == 1
     assert handler.unload_count == 1
     # this is 3 instead of 6 because locked callbacks on destroyed sessions
@@ -349,6 +355,7 @@ def test_use_xheaders():
     ("&resources=whatever", True),
     ("&resources=none", False),
 ])
+@pytest.mark.unit
 def test__resource_files_requested(querystring, requested):
     """
     Checks if the loading of resource files is requested by the autoload.js

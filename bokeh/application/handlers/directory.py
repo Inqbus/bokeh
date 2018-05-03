@@ -1,3 +1,10 @@
+#-----------------------------------------------------------------------------
+# Copyright (c) 2012 - 2017, Anaconda, Inc. All rights reserved.
+#
+# Powered by the Bokeh Development Team.
+#
+# The full license is in the file LICENSE.txt, distributed with this software.
+#-----------------------------------------------------------------------------
 '''  Provide a Bokeh Application Handler to build up documents by running
 the code from ``main.py`` or `main.ipynb`` files in specified directories.
 
@@ -12,7 +19,7 @@ The directory may also optionally contain:
 * A ``theme.yaml`` file containing a Bokeh theme to automatically apply to
   all new documents.
 
-* A ``tempates`` subdirectory containing templates for app display
+* A ``templates`` subdirectory containing templates for app display
 
 A full directory layout might look like:
 
@@ -28,18 +35,37 @@ A full directory layout might look like:
             +---index.html
 
 '''
-from __future__ import absolute_import, print_function
+
+#-----------------------------------------------------------------------------
+# Boilerplate
+#-----------------------------------------------------------------------------
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import logging
 log = logging.getLogger(__name__)
 
+#-----------------------------------------------------------------------------
+# Imports
+#-----------------------------------------------------------------------------
+
+# Standard library imports
 from os.path import basename, dirname, exists, join
 
+# External imports
 from jinja2 import Environment, FileSystemLoader
 
+# Bokeh imports
 from .handler import Handler
 from .script import ScriptHandler
 from .server_lifecycle import ServerLifecycleHandler
+
+#-----------------------------------------------------------------------------
+# Globals and constants
+#-----------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------
+# General API
+#-----------------------------------------------------------------------------
 
 class DirectoryHandler(Handler):
     ''' Load an application directory which modifies a Document.
@@ -48,7 +74,10 @@ class DirectoryHandler(Handler):
 
     def __init__(self, *args, **kwargs):
         '''
+        Keywords:
+            filename (str) : a path to an application directory with either "main.py" or "main.ipynb"
 
+            argv (list[str], optional) : a list of string arguments to make available as sys.argv to main.py
         '''
         super(DirectoryHandler, self).__init__(*args, **kwargs)
 
@@ -96,16 +125,40 @@ class DirectoryHandler(Handler):
             env = Environment(loader=FileSystemLoader(dirname(appindex)))
             self._template = env.get_template('index.html')
 
-    def url_path(self):
-        ''' The last path component for the basename of the path to the
-        configured directory.
+    # Properties --------------------------------------------------------------
+
+    @property
+    def error(self):
+        ''' If the handler fails, may contain a related error message.
 
         '''
-        if self.failed:
-            return None
-        else:
-            # TODO should fix invalid URL characters
-            return '/' + basename(self._path)
+        return self._main_handler.error or self._lifecycle_handler.error
+
+    @property
+    def error_detail(self):
+        ''' If the handler fails, may contain a traceback or other details.
+
+        '''
+        return self._main_handler.error_detail or self._lifecycle_handler.error_detail
+
+    @property
+    def failed(self):
+        ''' ``True`` if the handler failed to modify the doc
+
+        '''
+        return self._main_handler.failed or self._lifecycle_handler.failed
+
+    @property
+    def safe_to_fork(self):
+        ''' Whether it is still safe for the Bokeh server to fork new workers.
+
+        ``False`` if the configured code (script, notebook, etc.) has already
+        been run.
+
+        '''
+        return self._main_handler.safe_to_fork
+
+    # Public methods ----------------------------------------------------------
 
     def modify_document(self, doc):
         ''' Execute the configured ``main.py`` or ``main.ipynb`` to modify the
@@ -128,37 +181,6 @@ class DirectoryHandler(Handler):
 
         # This internal handler should never add a template
         self._main_handler.modify_document(doc)
-
-    @property
-    def failed(self):
-        ''' ``True`` if the handler failed to modify the doc
-
-        '''
-        return self._main_handler.failed or self._lifecycle_handler.failed
-
-    @property
-    def error(self):
-        ''' If the handler fails, may contain a related error message.
-
-        '''
-        return self._main_handler.error or self._lifecycle_handler.error
-
-    @property
-    def safe_to_fork(self):
-        ''' Whether it is still safe for the Bokeh server to fork new workers.
-
-        ``False`` if the configured code (script, notebook, etc.) has already
-        been run.
-
-        '''
-        return self._main_handler.safe_to_fork
-
-    @property
-    def error_detail(self):
-        ''' If the handler fails, may contain a traceback or other details.
-
-        '''
-        return self._main_handler.error_detail or self._lifecycle_handler.error_detail
 
     def on_server_loaded(self, server_context):
         ''' Execute `on_server_unloaded`` from ``server_lifecycle.py`` (if
@@ -205,3 +227,26 @@ class DirectoryHandler(Handler):
 
         '''
         return self._lifecycle_handler.on_session_destroyed(session_context)
+
+    def url_path(self):
+        ''' The last path component for the basename of the path to the
+        configured directory.
+
+        '''
+        if self.failed:
+            return None
+        else:
+            # TODO should fix invalid URL characters
+            return '/' + basename(self._path)
+
+#-----------------------------------------------------------------------------
+# Dev API
+#-----------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------
+# Private API
+#-----------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------
+# Code
+#-----------------------------------------------------------------------------

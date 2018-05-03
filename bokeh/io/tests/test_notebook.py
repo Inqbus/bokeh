@@ -13,15 +13,13 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import pytest ; pytest
 
-from bokeh.util.api import INTERNAL, PUBLIC ; INTERNAL, PUBLIC
-from bokeh.util.testing import verify_api ; verify_api
-
 #-----------------------------------------------------------------------------
 # Imports
 #-----------------------------------------------------------------------------
 
 # Standard library imports
-from mock import patch
+import json
+from mock import MagicMock, patch, PropertyMock
 
 # External imports
 
@@ -33,42 +31,11 @@ from bokeh.io.state import State
 import bokeh.io.notebook as binb
 
 #-----------------------------------------------------------------------------
-# API Definition
-#-----------------------------------------------------------------------------
-
-api = {
-
-    PUBLIC: (
-
-        ( 'CommsHandle',           (1, 0, 0) ),
-        ( 'install_notebook_hook', (1, 0, 0) ),
-        ( 'push_notebook',         (1, 0, 0) ),
-        ( 'run_notebook_hook',     (1, 0, 0) ),
-
-    ), INTERNAL: (
-
-        ( 'CommsHandle.comms.fget', (1, 0, 0) ),
-        ( 'CommsHandle.doc.fget',   (1, 0, 0) ),
-        ( 'destroy_server',         (1, 0, 0) ),
-        ( 'get_comms',              (1, 0, 0) ),
-        ( 'install_jupyter_hooks',  (1, 0, 0) ),
-        ( 'load_notebook',          (1, 0, 0) ),
-        ( 'publish_display_data',   (1, 0, 0) ),
-        ( 'show_app',               (1, 0, 0) ),
-        ( 'show_doc',               (1, 0, 0) ),
-
-    )
-
-}
-
-Test_api = verify_api(binb, api)
-
-#-----------------------------------------------------------------------------
 # Setup
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-# Public API
+# General API
 #-----------------------------------------------------------------------------
 
 def test_install_notebook_hook():
@@ -108,8 +75,37 @@ def test_show_doc_no_server(mock_notebook_content,
     assert mock__publish_display_data.call_args[0] == expected_args
     assert mock__publish_display_data.call_args[1] == expected_kwargs
 
+class Test_push_notebook(object):
+
+    @patch('bokeh.io.notebook.CommsHandle.comms', new_callable=PropertyMock)
+    def test_no_events(self, mock_comms):
+        mock_comms.return_value = MagicMock()
+
+        d = Document()
+
+        handle = binb.CommsHandle("comms", d)
+        binb.push_notebook(d, None, handle)
+        assert mock_comms.call_count == 0
+
+    @patch('bokeh.io.notebook.CommsHandle.comms', new_callable=PropertyMock)
+    def test_with_events(self, mock_comms):
+        mock_comm = MagicMock()
+        mock_send = MagicMock(return_value="junk")
+        mock_comm.send = mock_send
+        mock_comms.return_value = mock_comm
+
+        d = Document()
+
+        handle = binb.CommsHandle("comms", d)
+        d.title = "foo"
+        binb.push_notebook(d, None, handle)
+        assert mock_comms.call_count > 0
+        assert mock_send.call_count == 3 # sends header, metadata, then content
+        assert json.loads(mock_send.call_args[0][0]) == {u"events": [{u"kind": u"TitleChanged", u"title": u"foo"}], u"references": []}
+        assert mock_send.call_args[1] == {}
+
 #-----------------------------------------------------------------------------
-# Internal API
+# Dev API
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------

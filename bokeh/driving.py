@@ -42,8 +42,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 log = logging.getLogger(__name__)
 
-from bokeh.util.api import public, internal ; public, internal
-
 #-----------------------------------------------------------------------------
 # Imports
 #-----------------------------------------------------------------------------
@@ -70,10 +68,9 @@ __all__ = (
 )
 
 #-----------------------------------------------------------------------------
-# Public API
+# General API
 #-----------------------------------------------------------------------------
 
-@public((1,0,0))
 def bounce(sequence):
     ''' Return a driver function that can advance a "bounced" sequence
     of values.
@@ -97,7 +94,6 @@ def bounce(sequence):
             return sequence[N-mod-1]
     return partial(force, sequence=_advance(f))
 
-@public((1,0,0))
 def cosine(w, A=1, phi=0, offset=0):
     ''' Return a driver function that can advance a sequence of cosine values.
 
@@ -117,14 +113,12 @@ def cosine(w, A=1, phi=0, offset=0):
         return A * cos(w*i + phi) + offset
     return partial(force, sequence=_advance(f))
 
-@public((1,0,0))
 def count():
     ''' Return a driver function that can advance a simple count.
 
     '''
     return partial(force, sequence=_advance(lambda x: x))
 
-@public((1,0,0))
 def force(f, sequence):
     ''' Return a decorator that can "force" a function with an arbitrary
     supplied generator
@@ -141,7 +135,6 @@ def force(f, sequence):
         f(next(sequence))
     return wrapper
 
-@public((1,0,0))
 def linear(m=1, b=0):
     ''' Return a driver function that can advance a sequence of linear values.
 
@@ -158,7 +151,6 @@ def linear(m=1, b=0):
         return m * i + b
     return partial(force, sequence=_advance(f))
 
-@public((1,0,0))
 def repeat(sequence):
     ''' Return a driver function that can advance a repeated of values.
 
@@ -177,7 +169,6 @@ def repeat(sequence):
         return sequence[i%N]
     return partial(force, sequence=_advance(f))
 
-@public((1,0,0))
 def sine(w, A=1, phi=0, offset=0):
     ''' Return a driver function that can advance a sequence of sine values.
 
@@ -198,7 +189,7 @@ def sine(w, A=1, phi=0, offset=0):
     return partial(force, sequence=_advance(f))
 
 #-----------------------------------------------------------------------------
-# Internal API
+# Dev API
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------

@@ -11,6 +11,32 @@ describe "data_table module", ->
   it "should define DTINDEX_NAME", ->
     expect(DTINDEX_NAME).to.equal "__bkdt_internal_index__"
 
+  describe "DataTable class", ->
+
+    describe "get_scroll_index method", ->
+
+      it "should return null when scroll_to_selection=false", ->
+        t = new DataTable({scroll_to_selection: false})
+        expect(t.get_scroll_index({top:0, bottom:16}, [])).to.be.null
+        expect(t.get_scroll_index({top:0, bottom:16}, [10])).to.be.null
+        expect(t.get_scroll_index({top:0, bottom:16}, [18])).to.be.null
+
+      it "should return null when scroll_to_selection=true but selection is empty", ->
+        t = new DataTable({scroll_to_selection: true})
+        expect(t.get_scroll_index({top:0, bottom:16}, [])).to.be.null
+
+      it "should return null when scroll_to_selection=true but any selection is already in range", ->
+        t = new DataTable({scroll_to_selection: true})
+        expect(t.get_scroll_index({top:0, bottom:16}, [2])).to.be.null
+        expect(t.get_scroll_index({top:5, bottom:16}, [2, 10])).to.be.null
+        expect(t.get_scroll_index({top:5, bottom:16}, [2, 10, 18])).to.be.null
+
+      it "should return (min-1) when scroll_to_selection=true but no selection is in range", ->
+        t = new DataTable({scroll_to_selection: true})
+        expect(t.get_scroll_index({top:5, bottom:16}, [2])).to.be.equal 1
+        expect(t.get_scroll_index({top:5, bottom:16}, [2, 18])).to.be.equal 1
+        expect(t.get_scroll_index({top:5, bottom:16}, [18])).to.be.equal 17
+
   describe "DataProvider class", ->
 
     it "should raise an error if DTINDEX_NAME is in source", ->
@@ -128,11 +154,9 @@ describe "data_table module", ->
       dp = new DataProvider(source, view)
 
       r = dp.setField(0, "index", 10.1)
-      expect(r).to.equal null
       expect(dp.source.data).to.deep.equal {index: [10.1,1,2,10], bar: [3.4, 1.2, 0, -10]}
 
       r = dp.setField(2, "bar", 100)
-      expect(r).to.equal null
       expect(dp.source.data).to.deep.equal {index: [10.1,1,2,10], bar: [3.4, 1.2, 100, -10]}
 
     it "should set fields when sorted", ->
@@ -143,11 +167,9 @@ describe "data_table module", ->
       dp.sort([fake_col])
 
       r = dp.setField(0, "index", 10.1)
-      expect(r).to.equal null
       expect(dp.source.data).to.deep.equal {index: [0,1,2,10.1], bar: [3.4, 1.2, 0, -10]}
 
       r = dp.setField(2, "bar", 100)
-      expect(r).to.equal null
       expect(dp.source.data).to.deep.equal {index: [0,1,2,10.1], bar: [3.4, 100, 0, -10]}
 
     it "should set items when unsorted", ->
@@ -156,7 +178,6 @@ describe "data_table module", ->
       dp = new DataProvider(source, view)
 
       r = dp.setItem(2, {index:100, bar:200})
-      expect(r).to.equal null
       expect(dp.source.data).to.deep.equal {index: [0,1,100,10], bar: [3.4, 1.2, 200, -10]}
 
     it "should set items when sorted", ->
@@ -167,5 +188,4 @@ describe "data_table module", ->
       dp.sort([fake_col])
 
       r = dp.setItem(2, {index:100, bar:200})
-      expect(r).to.equal null
       expect(dp.source.data).to.deep.equal {index: [0,100,2,10], bar: [3.4, 200, 0, -10]}

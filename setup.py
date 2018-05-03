@@ -92,6 +92,7 @@ REQUIRES = [
     'python-dateutil >=2.1',
     'Jinja2 >=2.7',
     'numpy >=1.7.1',
+    'packaging >=16.8',
     'tornado >=4.3',
     'redis'
 ]
@@ -122,6 +123,8 @@ setup(
     name='bokeh',
     version=get_version(),
     description='Interactive plots and applications in the browser from Python',
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
     license='New BSD',
     author='Anaconda',
     author_email='info@anaconda.com',

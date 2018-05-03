@@ -13,9 +13,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import pytest ; pytest
 
-from bokeh.util.api import INTERNAL, PUBLIC ; INTERNAL, PUBLIC
-from bokeh.util.testing import verify_api ; verify_api
-
 #-----------------------------------------------------------------------------
 # Imports
 #-----------------------------------------------------------------------------
@@ -28,10 +25,6 @@ from bokeh.util.testing import verify_api ; verify_api
 
 # Module under test
 import bokeh.colors.named as bcn
-
-#-----------------------------------------------------------------------------
-# API Definition
-#-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
 # Setup
@@ -188,13 +181,14 @@ COLORS = (
 )
 
 #-----------------------------------------------------------------------------
-# Public API
+# General API
 #-----------------------------------------------------------------------------
 
 def test__all__():
     assert len(bcn.__all__) == 147
 
 @pytest.mark.parametrize('name,R,G,B', COLORS)
+@pytest.mark.unit
 def test_color(name, R, G, B):
     assert name in bcn.__all__
     c = getattr(bcn, name)
@@ -202,7 +196,7 @@ def test_color(name, R, G, B):
     assert c.a == 1.0
 
 #-----------------------------------------------------------------------------
-# Internal API
+# Dev API
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------

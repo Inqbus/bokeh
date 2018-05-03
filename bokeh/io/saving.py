@@ -17,8 +17,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 log = logging.getLogger(__name__)
 
-from bokeh.util.api import public, internal ; public, internal
-
 #-----------------------------------------------------------------------------
 # Imports
 #-----------------------------------------------------------------------------
@@ -31,6 +29,7 @@ from warnings import warn
 # External imports
 
 # Bokeh imports
+from ..settings import settings
 from ..util.string import decode_utf8
 from .state import curstate
 from .util import default_filename
@@ -42,10 +41,9 @@ from .util import default_filename
 DEFAULT_TITLE = "Bokeh Plot"
 
 #-----------------------------------------------------------------------------
-# Public API
+# General API
 #-----------------------------------------------------------------------------
 
-@public((1,0,0))
 def save(obj, filename=None, resources=None, title=None, state=None, **kwargs):
     ''' Save an HTML file with the data for the current document.
 
@@ -86,7 +84,7 @@ def save(obj, filename=None, resources=None, title=None, state=None, **kwargs):
     return abspath(filename)
 
 #-----------------------------------------------------------------------------
-# Internal API
+# Dev API
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
@@ -109,7 +107,7 @@ def _get_save_filename(state, filename):
     if filename is not None:
         return filename, False
 
-    if state.file:
+    if state.file and not settings.ignore_filename():
         return state.file['filename'], False
 
     return default_filename("html"), True

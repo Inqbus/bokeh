@@ -24,13 +24,13 @@ from .glyphs import *
 from .graphs import *
 from .grids import *
 from .layouts import *
-from .images import *
 from .map_plots import *
 from .markers import *
 from .mappers import *
 from .plots import *
 from .ranges import *
 from .renderers import *
+from .selections import *
 from .sources import *
 from .tickers import *
 from .tiles import *

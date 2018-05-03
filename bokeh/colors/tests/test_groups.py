@@ -13,9 +13,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import pytest ; pytest
 
-from bokeh.util.api import INTERNAL, PUBLIC ; INTERNAL, PUBLIC
-from bokeh.util.testing import verify_api ; verify_api
-
 #-----------------------------------------------------------------------------
 # Imports
 #-----------------------------------------------------------------------------
@@ -28,10 +25,6 @@ from bokeh.util.testing import verify_api ; verify_api
 
 # Module under test
 import bokeh.colors.groups as bcg
-
-#-----------------------------------------------------------------------------
-# API Definition
-#-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
 # Setup
@@ -211,13 +204,14 @@ _black = (
 )
 
 #-----------------------------------------------------------------------------
-# Public API
+# General API
 #-----------------------------------------------------------------------------
 
 def test__all__():
     assert bcg.__all__ == ('pink', 'red', 'orange', 'yellow', 'brown', 'green', 'cyan', 'blue', 'purple', 'white', 'black')
 
 @pytest.mark.parametrize('group', bcg.__all__)
+@pytest.mark.unit
 def test_color(group):
     assert group in bcg.__all__
     g = getattr(bcg, group)
@@ -227,7 +221,7 @@ def test_color(group):
         assert getattr(g, x, None) is not None
 
 #-----------------------------------------------------------------------------
-# Internal API
+# Dev API
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------

@@ -1,3 +1,10 @@
+#-----------------------------------------------------------------------------
+# Copyright (c) 2012 - 2017, Anaconda, Inc. All rights reserved.
+#
+# Powered by the Bokeh Development Team.
+#
+# The full license is in the file LICENSE.txt, distributed with this software.
+#-----------------------------------------------------------------------------
 ''' Provide the ``Application`` class.
 
 Application instances are factories for creating new Bokeh Documents.
@@ -9,185 +16,38 @@ creates a new empty Document, then it passes this new Document to the
 updated the Document, it is used to service the user session.
 
 '''
-from __future__ import absolute_import
+
+#-----------------------------------------------------------------------------
+# Boilerplate
+#-----------------------------------------------------------------------------
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import logging
 log = logging.getLogger(__name__)
 
-from tornado import gen
+#-----------------------------------------------------------------------------
+# Imports
+#-----------------------------------------------------------------------------
 
+# Standard library imports
 from abc import ABCMeta, abstractmethod, abstractproperty
 
-from ..util.future import with_metaclass
-from ..util.tornado import yield_for_all_futures
+# External imports
+from tornado import gen
+
+# Bokeh imports
 from ..document import Document
 from ..settings import settings
+from ..util.future import with_metaclass
+from ..util.tornado import yield_for_all_futures
 
-class ServerContext(with_metaclass(ABCMeta)):
-    ''' A harness for server-specific information and tasks related to
-    collections of Bokeh sessions.
+#-----------------------------------------------------------------------------
+# Globals and constants
+#-----------------------------------------------------------------------------
 
-    *This base class is probably not of interest to general users.*
-
-    '''
-
-    @abstractproperty
-    def sessions(self):
-        ''' SessionContext instances belonging to this application.
-
-        *Subclasses must implement this method.*
-
-        '''
-        pass
-
-    @abstractmethod
-    def add_next_tick_callback(self, callback):
-        ''' Add a callback to be run on the next tick of the event loop.
-
-        *Subclasses must implement this method.*
-
-        Args:
-            callback (callable) : a callback to add
-
-                The callback will execute on the next tick of the event loop,
-                and should have the form ``def callback()`` (i.e. it should
-                not accept any arguments)
-
-        '''
-        pass
-
-    @abstractmethod
-    def remove_next_tick_callback(self, callback):
-        ''' Remove a callback added with ``add_next_tick_callback``, before
-        it runs.
-
-         *Subclasses must implement this method.*
-
-        Args:
-            callback (callable) : the callback to remove
-
-        '''
-        pass
-
-    @abstractmethod
-    def add_timeout_callback(self, callback, timeout_milliseconds):
-        ''' Add a callback to be run once after timeout_milliseconds.
-
-        *Subclasses must implement this method.*
-
-        Args:
-            callback (callable) : a callback to add
-
-                The callback will execute once on the event loop after the
-                timeout has passed, and should have the form ``def callback()``
-                (i.e. it should not accept any arguments)
-
-            timeout_milliseconds (int) : number of milliseconds to wait before
-                executing the callback.
-
-        '''
-        pass
-
-    @abstractmethod
-    def remove_timeout_callback(self, callback):
-        ''' Remove a callback added with ``add_timeout_callback``, before it
-        runs.
-
-        *Subclasses must implement this method.*
-
-        Args:
-            callback (callable) : the callback to remove
-
-        '''
-        pass
-
-    @abstractmethod
-    def add_periodic_callback(self, callback, period_milliseconds):
-        ''' Add a callback to be run periodically until it is removed.
-
-        *Subclasses must implement this method.*
-
-        Args:
-            callback (callable) : a callback to add
-
-                The callback will execute periodically on the event loop
-                as specified, and should have the form ``def callback()``
-                (i.e. it should not accept any arguments)
-
-            period_milliseconds (int) : number of milliseconds to wait
-                between executing the callback.
-
-        '''
-        pass
-
-    @abstractmethod
-    def remove_periodic_callback(self, callback):
-        ''' Removes a callback added with ``add_periodic_callback``.
-
-        *Subclasses must implement this method.*
-
-        Args:
-            callback (callable) : the callback to remove
-
-        '''
-        pass
-
-class SessionContext(with_metaclass(ABCMeta)):
-    ''' A harness for server-specific information and tasks related to
-    Bokeh sessions.
-
-    *This base class is probably not of interest to general users.*
-
-    '''
-
-    def __init__(self, server_context, session_id):
-        '''
-
-        '''
-        self._server_context = server_context
-        self._id = session_id
-
-    @property
-    def server_context(self):
-        ''' The server context for this session context
-
-        '''
-        return self._server_context
-
-    @property
-    def id(self):
-        ''' The unique ID for the session associated with this context.
-
-        '''
-        return self._id
-
-    @property
-    @abstractmethod
-    def destroyed(self):
-        ''' If ``True``, the session has been discarded and cannot be used.
-
-        A new session with the same ID could be created later but this instance
-        will not come back to life.
-
-        '''
-        raise NotImplementedError("destroyed")
-
-    @abstractmethod
-    def with_locked_document(self, func):
-        ''' Runs a function with the document lock held, passing the
-        document to the function.
-
-        *Subclasses must implement this method.*
-
-        Args:
-            func (callable): function that takes a single parameter (the Document)
-                and returns ``None`` or a ``Future``
-
-        Returns:
-            a ``Future`` containing the result of the function
-
-        '''
-        raise NotImplementedError("locked_document")
+#-----------------------------------------------------------------------------
+# General API
+#-----------------------------------------------------------------------------
 
 class Application(object):
     ''' An Application is a factory for Document instances.
@@ -238,6 +98,58 @@ class Application(object):
         for h in handlers:
             self.add(h)
 
+    # Properties --------------------------------------------------------------
+
+    @property
+    def handlers(self):
+        ''' The ordered list of handlers this Application is configured with.
+
+        '''
+        return tuple(self._handlers)
+
+    @property
+    def metadata(self):
+        ''' Arbitrary user-supplied metadata to associate with this application.
+
+        '''
+        return self._metadata
+
+    @property
+    def safe_to_fork(self):
+        '''
+
+        '''
+        return all(handler.safe_to_fork for handler in self._handlers)
+
+    @property
+    def static_path(self):
+        ''' Path to any (optional) static resources specified by handlers.
+
+        '''
+        return self._static_path
+
+    # Public methods ----------------------------------------------------------
+
+    def add(self, handler):
+        ''' Add a handler to the pipeline used to initialize new documents.
+
+        Args:
+            handler (Handler) : a handler for this Application to use to
+                process Documents
+
+        '''
+        self._handlers.append(handler)
+
+        # make sure there is at most one static path
+        static_paths = set(h.static_path() for h in self.handlers)
+        static_paths.discard(None)
+        if len(static_paths) > 1:
+            raise RuntimeError("More than one static path requested for app: %r" % list(static_paths))
+        elif len(static_paths) == 1:
+            self._static_path = static_paths.pop()
+        else:
+            self._static_path = None
+
     def create_document(self):
         ''' Creates and initializes a document using the Application's handlers.
 
@@ -260,55 +172,6 @@ class Application(object):
 
         if settings.perform_document_validation():
             doc.validate()
-
-    def add(self, handler):
-        ''' Add a handler to the pipeline used to initialize new documents.
-
-        Args:
-            handler (Handler) : a handler for this Application to use to
-                process Documents
-
-        '''
-        self._handlers.append(handler)
-
-        # make sure there is at most one static path
-        static_paths = set(h.static_path() for h in self.handlers)
-        static_paths.discard(None)
-        if len(static_paths) > 1:
-            raise RuntimeError("More than one static path requested for app: %r" % list(static_paths))
-        elif len(static_paths) == 1:
-            self._static_path = static_paths.pop()
-        else:
-            self._static_path = None
-
-    @property
-    def handlers(self):
-        ''' The ordered list of handlers this Application is configured with.
-
-        '''
-        return tuple(self._handlers)
-
-    @property
-    def safe_to_fork(self):
-        '''
-
-        '''
-        return all(handler.safe_to_fork for handler in self._handlers)
-
-    @property
-    def metadata(self):
-        ''' Arbitrary user-supplied metadata to associate with this
-        application.
-
-        '''
-        return self._metadata
-
-    @property
-    def static_path(self):
-        ''' Path to any (optional) static resources specified by handlers.
-
-        '''
-        return self._static_path
 
     def on_server_loaded(self, server_context):
         ''' Invoked to execute code when a new session is created.
@@ -365,3 +228,197 @@ class Application(object):
             result = h.on_session_destroyed(session_context)
             yield yield_for_all_futures(result)
         raise gen.Return(None)
+
+#-----------------------------------------------------------------------------
+# Dev API
+#-----------------------------------------------------------------------------
+
+class ServerContext(with_metaclass(ABCMeta)):
+    ''' A harness for server-specific information and tasks related to
+    collections of Bokeh sessions.
+
+    *This base class is probably not of interest to general users.*
+
+    '''
+
+    # Properties --------------------------------------------------------------
+
+    @abstractproperty
+    def sessions(self):
+        ''' SessionContext instances belonging to this application.
+
+        *Subclasses must implement this method.*
+
+        '''
+        pass
+
+    # Public methods ----------------------------------------------------------
+
+    @abstractmethod
+    def add_next_tick_callback(self, callback):
+        ''' Add a callback to be run on the next tick of the event loop.
+
+        *Subclasses must implement this method.*
+
+        Args:
+            callback (callable) : a callback to add
+
+                The callback will execute on the next tick of the event loop,
+                and should have the form ``def callback()`` (i.e. it should
+                not accept any arguments)
+
+        Returns:
+            an ID that can be used with ``remove_next_tick_callback``.
+
+        '''
+        pass
+
+    @abstractmethod
+    def add_periodic_callback(self, callback, period_milliseconds):
+        ''' Add a callback to be run periodically until it is removed.
+
+        *Subclasses must implement this method.*
+
+        Args:
+            callback (callable) : a callback to add
+
+                The callback will execute periodically on the event loop
+                as specified, and should have the form ``def callback()``
+                (i.e. it should not accept any arguments)
+
+            period_milliseconds (int) : number of milliseconds to wait
+                between executing the callback.
+
+        Returns:
+            an ID that can be used with ``remove_periodic_callback``.
+
+        '''
+        pass
+
+    @abstractmethod
+    def add_timeout_callback(self, callback, timeout_milliseconds):
+        ''' Add a callback to be run once after timeout_milliseconds.
+
+        *Subclasses must implement this method.*
+
+        Args:
+            callback (callable) : a callback to add
+
+                The callback will execute once on the event loop after the
+                timeout has passed, and should have the form ``def callback()``
+                (i.e. it should not accept any arguments)
+
+            timeout_milliseconds (int) : number of milliseconds to wait before
+                executing the callback.
+
+        Returns:
+            an ID that can be used with ``remove_timeout_callback``.
+
+        '''
+        pass
+
+    @abstractmethod
+    def remove_next_tick_callback(self, callback_id):
+        ''' Remove a callback added with ``add_next_tick_callback``, before
+        it runs.
+
+         *Subclasses must implement this method.*
+
+        Args:
+            callback_id : the ID returned from ``add_next_tick_callback``
+
+        '''
+        pass
+
+    @abstractmethod
+    def remove_periodic_callback(self, callback_id):
+        ''' Removes a callback added with ``add_periodic_callback``.
+
+        *Subclasses must implement this method.*
+
+        Args:
+            callback_id : the ID returned from ``add_periodic_callback``
+
+        '''
+        pass
+
+    @abstractmethod
+    def remove_timeout_callback(self, callback_id):
+        ''' Remove a callback added with ``add_timeout_callback``, before it
+        runs.
+
+        *Subclasses must implement this method.*
+
+        Args:
+            callback_id : the ID returned from ``add_timeout_callback``
+
+        '''
+        pass
+
+class SessionContext(with_metaclass(ABCMeta)):
+    ''' A harness for server-specific information and tasks related to
+    Bokeh sessions.
+
+    *This base class is probably not of interest to general users.*
+
+    '''
+
+    def __init__(self, server_context, session_id):
+        '''
+
+        '''
+        self._server_context = server_context
+        self._id = session_id
+
+    # Properties --------------------------------------------------------------
+
+    @abstractproperty
+    def destroyed(self):
+        ''' If ``True``, the session has been discarded and cannot be used.
+
+        A new session with the same ID could be created later but this instance
+        will not come back to life.
+
+        '''
+        pass
+
+    @property
+    def id(self):
+        ''' The unique ID for the session associated with this context.
+
+        '''
+        return self._id
+
+    @property
+    def server_context(self):
+        ''' The server context for this session context
+
+        '''
+        return self._server_context
+
+    # Public methods ----------------------------------------------------------
+
+    @abstractmethod
+    def with_locked_document(self, func):
+        ''' Runs a function with the document lock held, passing the
+        document to the function.
+
+        *Subclasses must implement this method.*
+
+        Args:
+            func (callable): function that takes a single parameter (the Document)
+                and returns ``None`` or a ``Future``
+
+        Returns:
+            a ``Future`` containing the result of the function
+
+        '''
+        pass
+
+#-----------------------------------------------------------------------------
+# Private API
+#-----------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------
+# Code
+#-----------------------------------------------------------------------------

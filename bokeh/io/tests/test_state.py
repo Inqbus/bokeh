@@ -13,9 +13,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import pytest ; pytest
 
-from bokeh.util.api import INTERNAL, PUBLIC ; INTERNAL, PUBLIC
-from bokeh.util.testing import verify_api ; verify_api
-
 #-----------------------------------------------------------------------------
 # Imports
 #-----------------------------------------------------------------------------
@@ -32,39 +29,11 @@ from bokeh.document import Document
 import bokeh.io.state as bis
 
 #-----------------------------------------------------------------------------
-# API Definition
-#-----------------------------------------------------------------------------
-
-api = {
-
-    PUBLIC: (
-
-        ( 'State',                    (1, 0, 0) ),
-        ( 'State.document.fget',      (1, 0, 0) ),
-        ( 'State.document.fset',      (1, 0, 0) ),
-        ( 'State.notebook.fget',      (1, 0, 0) ),
-        ( 'State.notebook_type.fget', (1, 0, 0) ),
-        ( 'State.notebook_type.fset', (1, 0, 0) ),
-        ( 'State.file.fget',          (1, 0, 0) ),
-        ( 'State.output_file',        (1, 0, 0) ),
-        ( 'State.output_notebook',    (1, 0, 0) ),
-        ( 'State.reset',              (1, 0, 0) ),
-        ( 'curstate',                 (1, 0, 0) ),
-
-    ), INTERNAL: (
-
-    )
-
-}
-
-Test_api = verify_api(bis, api)
-
-#-----------------------------------------------------------------------------
 # Setup
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-# Public API
+# General API
 #-----------------------------------------------------------------------------
 
 class Test_State(object):
@@ -157,7 +126,7 @@ def test_curstate():
     bis._STATE = old_STATE
 
 #-----------------------------------------------------------------------------
-# Internal API
+# Dev API
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------

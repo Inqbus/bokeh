@@ -172,6 +172,7 @@ def test_Image():
         "dw_units",
         "dh",
         "dh_units",
+        "global_alpha",
         "dilate",
         "color_mapper",
     ], GLYPH)
@@ -193,6 +194,7 @@ def test_ImageRGBA():
         "dw_units",
         "dh",
         "dh_units",
+        "global_alpha",
         "dilate",
     ], GLYPH)
 

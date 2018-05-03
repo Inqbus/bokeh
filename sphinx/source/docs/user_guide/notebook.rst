@@ -18,6 +18,13 @@ the next notebook output cell. You can see a Jupyter screenshot below:
     :scale: 50 %
     :align: center
 
+Multiple plots can be displayed in a single notebook output cell by calling
+|show| multiple times in the input cell. The plots will be displayed in order.
+
+.. image:: /_images/notebook_inline_multiple.png
+    :scale: 50 %
+    :align: center
+
 In order to embed Bokeh plots inside of JupyterLab, you need to install
 the "jupyterlab_bokeh" JupyterLab extension. This can be done by running
 the command: ``jupyter labextension install jupyterlab_bokeh``.
@@ -27,8 +34,9 @@ the command: ``jupyter labextension install jupyterlab_bokeh``.
     :align: center
 
 By defaults, |output_notebook| apply to Juypter. If you want to use bokeh
-to display inline plots in Zeppelin, you need to specify `notebook_type`
-to `zeppelin` in |output_notebook|. Here's one Zeppelin screenshot.
+to display inline plots in Zeppelin, you need to use `bkzep`_ package and
+specify `notebook_type` to `zeppelin` in |output_notebook|.
+Here's one Zeppelin screenshot.
 
 .. image:: /_images/bokeh_simple_test_zeppelin.png
     :scale: 50 %
@@ -136,3 +144,5 @@ notebook is shown below:
 .. _Reveal.js: http://lab.hakim.se/reveal-js/#/
 
 .. _interactors: http://ipywidgets.readthedocs.io/en/latest/examples/Using%20Interact.html
+
+.. _bkzep: https://github.com/zjffdu/bkzep

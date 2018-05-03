@@ -22,36 +22,32 @@ always be active regardless of what other tools are currently active.
 '''
 from __future__ import absolute_import
 
-from ..core.enums import Anchor, Dimension, Dimensions, Location, TooltipFieldFormatter
+from ..core.enums import (Anchor, Dimension, Dimensions, Location,
+                          TooltipFieldFormatter, TooltipAttachment)
 from ..core.has_props import abstract
 from ..core.properties import (
-    Auto, Bool, Color, Dict, Either, Enum, Float, Percent, Instance, List,
-    Seq, String, Tuple
+    Auto, Bool, Color, Date, Datetime, Dict, Either, Enum, Int, Float,
+    Percent, Instance, List, Seq, String, Tuple
+)
+from ..core.validation import error
+from ..core.validation.errors import (
+    INCOMPATIBLE_BOX_EDIT_RENDERER, INCOMPATIBLE_POINT_DRAW_RENDERER,
+    INCOMPATIBLE_POLY_DRAW_RENDERER, INCOMPATIBLE_POLY_EDIT_RENDERER,
+    INCOMPATIBLE_POLY_EDIT_VERTEX_RENDERER
 )
 from ..model import Model
-from ..util.deprecation import deprecated
 
 from .annotations import BoxAnnotation, PolyAnnotation
 from .callbacks import Callback
-from .renderers import Renderer
+from .glyphs import XYGlyph, Rect, Patches, MultiLine
+from .renderers import Renderer, GlyphRenderer
 from .layouts import LayoutDOM
-
 
 @abstract
 class Tool(Model):
     ''' A base class for all interactive tool types.
 
     '''
-
-    @property
-    def plot(self):
-        deprecated("Tool.plot property is no longer needed, and any use deprecated. In the future, accessing Tool.plot will result in an AttributeError")
-        return None
-
-    @plot.setter
-    def plot(self, val):
-        deprecated("Tool.plot property is no longer needed, and any use is deprecated. In the future, accessing Tool.plot will result in an AttributeError")
-        return None
 
 @abstract
 class Action(Tool):
@@ -81,7 +77,6 @@ class Tap(Tool):
     '''
     pass
 
-
 @abstract
 class Inspection(Tool):
     ''' A base class for tools that perform "inspections", e.g. ``HoverTool``.
@@ -107,7 +102,6 @@ class ToolbarBase(Model):
     tools = List(Instance(Tool), help="""
     A list of tools to add to the plot.
     """)
-
 
 class Toolbar(ToolbarBase):
     ''' Collect tools to display for a single plot.
@@ -186,7 +180,6 @@ class WheelPanTool(Scroll):
     default the wheel pan tool will pan the plot along the x-axis.
     """)
 
-
 class WheelZoomTool(Scroll):
     ''' *toolbar icon*: |wheel_zoom_icon|
 
@@ -210,6 +203,21 @@ class WheelZoomTool(Scroll):
     vertically across the height of the plot.
     """)
 
+    maintain_focus = Bool(default=True, help="""
+    Whether or not zooming tool maintains its focus position. Setting it
+    to False results in a more "gliding" behavior, allowing one to
+    zoom out more smoothly, at the cost of losing the focus position.
+    """)
+
+    zoom_on_axis = Bool(default=True, help="""
+    Whether scrolling on an axis (outside the central plot area) should
+    zoom that dimension.
+    """)
+
+    speed = Float(default=1/600, help="""
+    Speed at which the wheel zooms. Default is 1/600. Optimal range is between
+    0.001 and 0.09. High values will be clipped. Speed may very between browsers.
+    """)
 
 class SaveTool(Action):
     ''' *toolbar icon*: |save_icon|
@@ -226,7 +234,6 @@ class SaveTool(Action):
 
     '''
 
-
 class ResetTool(Action):
     ''' *toolbar icon*: |reset_icon|
 
@@ -242,11 +249,7 @@ class ResetTool(Action):
 
     '''
 
-    reset_size = Bool(default=True, help="""
-    Whether activating the Reset tool should also reset the plot's canvas
-    dimensions to their original size.
-    """)
-
+    pass
 
 class TapTool(Tap):
     ''' *toolbar icon*: |tap_icon|
@@ -273,8 +276,8 @@ class TapTool(Tap):
     have a matching value for their ``name`` attribute will be used.
     """)
 
-    renderers = List(Instance(Renderer), help="""
-    An explicit list of renderers to hit test again. If unset,
+    renderers = Either(Auto, List(Instance(Renderer)), default="auto", help="""
+    An explicit list of renderers to hit test against. If unset,
     defaults to all renderers on a plot.
     """)
 
@@ -307,9 +310,6 @@ class TapTool(Tap):
         please see :ref:`userguide_interaction_jscallbacks_customjs_interactions`.
 
     """)
-
-
-
 
 class CrosshairTool(Inspection):
     ''' *toolbar icon*: |crosshair_icon|
@@ -456,7 +456,6 @@ class ZoomOutTool(Action):
     Percentage to zoom for each click of the zoom-in tool.
     """)
 
-
 class BoxSelectTool(Drag):
     ''' *toolbar icon*: |box_select_icon|
 
@@ -479,8 +478,8 @@ class BoxSelectTool(Drag):
     have a matching value for their ``name`` attribute will be used.
     """)
 
-    renderers = List(Instance(Renderer), help="""
-    An explicit list of renderers to hit test again. If unset,
+    renderers = Either(Auto, List(Instance(Renderer)), default="auto", help="""
+    An explicit list of renderers to hit test against. If unset,
     defaults to all renderers on a plot.
     """)
 
@@ -550,8 +549,8 @@ class LassoSelectTool(Drag):
     have a matching value for their ``name`` attribute will be used.
     """)
 
-    renderers = List(Instance(Renderer), help="""
-    An explicit list of renderers to hit test again. If unset,
+    renderers = Either(Auto, List(Instance(Renderer)), default="auto", help="""
+    An explicit list of renderers to hit test against. If unset,
     defaults to all renderers on a plot.
     """)
 
@@ -571,7 +570,6 @@ class LassoSelectTool(Drag):
     overlay = Instance(PolyAnnotation, default=DEFAULT_POLY_OVERLAY, help="""
     A shaded annotation drawn to indicate the selection region.
     """)
-
 
 class PolySelectTool(Tap):
     ''' *toolbar icon*: |poly_select_icon|
@@ -601,8 +599,8 @@ class PolySelectTool(Tap):
     have a matching value for their ``name`` attribute will be used.
     """)
 
-    renderers = List(Instance(Renderer), help="""
-    An explicit list of renderers to hit test again. If unset,
+    renderers = Either(Auto, List(Instance(Renderer)), default="auto", help="""
+    An explicit list of renderers to hit test against. If unset,
     defaults to all renderers on a plot.
     """)
 
@@ -684,8 +682,8 @@ class HoverTool(Inspection):
     have a matching value for their ``name`` attribute will be used.
     """)
 
-    renderers = List(Instance(Renderer), help="""
-    An explicit list of renderers to hit test again. If unset,
+    renderers = Either(Auto, List(Instance(Renderer)), defatult="auto", help="""
+    An explicit list of renderers to hit test against. If unset,
     defaults to all renderers on a plot.
     """)
 
@@ -702,7 +700,7 @@ class HoverTool(Inspection):
             default=[
                 ("index","$index"),
                 ("data (x, y)","($x, $y)"),
-                ("canvas (x, y)","($sx, $sy)"),
+                ("screen (x, y)","($sx, $sy)"),
             ], help="""
     The (name, field) pairs describing what the hover tool should
     display when there is a hit.
@@ -819,8 +817,10 @@ class HoverTool(Inspection):
     point of a tooltip. The default is to attach to the center of a glyph.
     """)
 
-    attachment = Enum("horizontal", "vertical", help="""
-    Whether tooltip's arrow should appear in the horizontal or vertical dimension.
+    attachment = Enum(TooltipAttachment, help="""
+    Whether the tooltip should be displayed to the left or right of the cursor
+    position or above or below it, or if it should be automatically placed
+    in the horizontal or vertical dimension.
     """)
 
     show_arrow = Bool(default=True, help="""
@@ -865,3 +865,234 @@ class RedoTool(Action):
         :height: 18pt
 
     '''
+
+@abstract
+class EditTool(Tool):
+    ''' A base class for all interactive draw tool types.
+
+    '''
+
+    empty_value = Either(Bool, Int, Float, Date, Datetime, Color, help="""
+    Defines the value to insert on non-coordinate columns when a new
+    glyph is inserted into the ColumnDataSource columns, e.g. when a
+    circle glyph defines 'x', 'y' and 'color' columns, adding a new
+    point will add the x and y-coordinates to 'x' and 'y' columns and
+    the color column will be filled with the defined empty value.
+    """)
+
+    renderers = List(Instance(Renderer), help="""
+    An explicit list of renderers corresponding to scatter glyphs
+    that may be edited.
+    """)
+
+class BoxEditTool(EditTool, Drag, Tap):
+    ''' *toolbar icon*: |box_edit_icon|
+
+    The BoxEditTool allows drawing, dragging and deleting ``Rect``
+    glyphs on one or more renderers by editing the underlying
+    ``ColumnDataSource`` data. Like other drawing tools, the renderers
+    that are to be edited must be supplied explicitly as a list. When
+    drawing a new box the data will always be added to the
+    ``ColumnDataSource`` on the first supplied renderer.
+
+    The tool will automatically modify the columns on the data source
+    corresponding to the ``x``, ``y``, ``width`` and ``height`` values
+    of the glyph. Any additional columns in the data source will be
+    padded with the declared ``empty_value``, when adding a new box.
+
+    The supported actions include:
+
+    * Add box: Hold shift then click and drag anywhere on the plot or
+      double tap once to start drawing, move the mouse and double tap
+      again to finish drawing.
+
+    * Move box: Click and drag an existing box, the box will be
+      dropped once you let go of the mouse button.
+
+    * Delete box: Tap a box to select it then press <<backspace>> key
+      while the mouse is within the plot area.
+
+    To **Move** or **Delete** multiple boxes at once:
+
+    * Move selection: Select box(es) with <<shift>>+tap (or another
+      selection tool) then drag anywhere on the plot. Selecting and
+      then dragging on a specific box will move both.
+
+    * Delete selection: Select box(es) with <<shift>>+tap (or another
+      selection tool) then press <<backspace>> while the mouse is
+      within the plot area.
+
+    .. |box_edit_icon| image:: /_images/icons/BoxEdit.png
+        :height: 18pt
+    '''
+
+    dimensions = Enum(Dimensions, default="both", help="""
+    Which dimensions the box drawing is to be free in. By default,
+    users may freely draw boxes with any dimensions. If only "width"
+    is supplied, the box will be constrained to span the entire
+    vertical space of the plot, only the horizontal dimension can be
+    controlled. If only "height" is supplied, the box will be
+    constrained to span the entire horizontal space of the plot, and
+    the vertical dimension can be controlled.
+    """)
+
+    @error(INCOMPATIBLE_BOX_EDIT_RENDERER)
+    def _check_compatible_renderers(self):
+        incompatible_renderers = []
+        for renderer in self.renderers:
+            if not isinstance(renderer.glyph, Rect):
+                incompatible_renderers.append(renderer)
+        if incompatible_renderers:
+            glyph_types = ', '.join([type(renderer.glyph).__name__ for renderer in incompatible_renderers])
+            return "%s glyph type(s) found." % glyph_types
+
+class PointDrawTool(EditTool, Drag, Tap):
+    ''' *toolbar icon*: |point_draw_icon|
+
+    The PointDrawTool allows adding, dragging and deleting point-like
+    glyphs (of ``XYGlyph`` type) on one or more renderers by editing the
+    underlying ``ColumnDataSource`` data. Like other drawing tools, the
+    renderers that are to be edited must be supplied explicitly as a list.
+    Any newly added points will be inserted on the ``ColumnDataSource`` of
+    the first supplied renderer.
+
+    The tool will automatically modify the columns on the data source
+    corresponding to the ``x`` and ``y`` values of the glyph. Any additional
+    columns in the data source will be padded with the given ``empty_value``
+    when adding a new point.
+
+    .. note::
+        The data source updates will trigger data change events continuously
+        throughout the edit operations on the BokehJS side. In Bokeh server
+        apps, the data source will only be synced once, when the edit operation
+        finishes.
+
+    The supported actions include:
+
+    * Add point: Tap anywhere on the plot
+
+    * Move point: Tap and drag an existing point, the point will be
+      dropped once you let go of the mouse button.
+
+    * Delete point: Tap a point to select it then press <<backspace>>
+      key while the mouse is within the plot area.
+
+    .. |point_draw_icon| image:: /_images/icons/PointDraw.png
+        :height: 18pt
+    '''
+
+    add = Bool(default=True, help="""
+    Enables adding of new points on tap events.""")
+
+    drag = Bool(default=True, help="""
+    Enables dragging of existing points on pan events.""")
+
+    @error(INCOMPATIBLE_POINT_DRAW_RENDERER)
+    def _check_compatible_renderers(self):
+        incompatible_renderers = []
+        for renderer in self.renderers:
+            if not isinstance(renderer.glyph, XYGlyph):
+                incompatible_renderers.append(renderer)
+        if incompatible_renderers:
+            glyph_types = ', '.join([type(renderer.glyph).__name__ for renderer in incompatible_renderers])
+            return "%s glyph type(s) found." % glyph_types
+
+class PolyDrawTool(EditTool, Drag, Tap):
+    ''' *toolbar icon*: |poly_draw_icon|
+
+    The PolyDrawTool allows drawing, selecting and deleting
+    ``Patches`` and ``MultiLine`` glyphs on one or more renderers by
+    editing the underlying ColumnDataSource data. Like other drawing
+    tools, the renderers that are to be edited must be supplied
+    explicitly as a list.
+
+    The tool will automatically modify the columns on the data source
+    corresponding to the ``xs`` and ``ys`` values of the glyph. Any
+    additional columns in the data source will be padded with the
+    declared ``empty_value``, when adding a new point.
+
+    The supported actions include:
+
+    * Add patch/multi-line: Double tap to add the first vertex, then
+      use tap to add each subsequent vertex, to finalize the draw
+      action double tap to insert the final vertex or press the <<esc>
+      key.
+
+    * Move patch/multi-line: Tap and drag an existing
+      patch/multi-line, the point will be dropped once you let go of
+      the mouse button.
+
+    * Delete patch/multi-line: Tap a patch/multi-line to select it
+      then press <<backspace>> key while the mouse is within the plot
+      area.
+
+    .. |poly_draw_icon| image:: /_images/icons/PolyDraw.png
+        :height: 18pt
+    '''
+
+    drag = Bool(default=True, help="""
+    Enables dragging of existing patches and multi-lines on pan events.""")
+
+    @error(INCOMPATIBLE_POLY_DRAW_RENDERER)
+    def _check_compatible_renderers(self):
+        incompatible_renderers = []
+        for renderer in self.renderers:
+            if not isinstance(renderer.glyph, (MultiLine, Patches)):
+                incompatible_renderers.append(renderer)
+        if incompatible_renderers:
+            glyph_types = ', '.join([type(renderer.glyph).__name__ for renderer in incompatible_renderers])
+            return "%s glyph type(s) found." % glyph_types
+
+class PolyEditTool(EditTool, Drag, Tap):
+    ''' *toolbar icon*: |poly_edit_icon|
+
+    The PolyEditTool allows editing the vertices of one or more
+    ``Patches`` or ``MultiLine`` glyphs. The glyphs to be edited can
+    be defined via the ``renderers`` property and the renderer for the
+    vertices can be defined via the ``vertex_renderer``, which must
+    render a point-like Glyph (of ``XYGlyph`` type).
+
+    The tool will automatically modify the columns on the data source
+    corresponding to the ``xs`` and ``ys`` values of the glyph. Any
+    additional columns in the data source will be padded with the
+    declared ``empty_value``, when adding a new point.
+
+    The supported actions include:
+
+    * Show vertices: Double tap an existing patch or multi-line
+
+    * Add vertex: Double tap an existing vertex to select it, the tool
+      will draw the next point, to add it tap in a new location. To
+      finish editing and add a point double tap otherwise press the
+      <<esc> key to cancel.
+
+    * Move vertex: Drag an existing vertex and let go of the mouse
+      button to release it.
+
+    * Delete vertex: After selecting one or more vertices press
+      <<backspace>> while the mouse cursor is within the plot area.
+
+    .. |poly_edit_icon| image:: /_images/icons/PolyEdit.png
+        :height: 18pt
+    '''
+
+    vertex_renderer = Instance(GlyphRenderer, help="""
+    The renderer used to render the vertices of a selected line or
+    polygon.""")
+
+    @error(INCOMPATIBLE_POLY_EDIT_VERTEX_RENDERER)
+    def _check_compatible_vertex_renderer(self):
+        glyph = self.vertex_renderer.glyph
+        if not isinstance(glyph, XYGlyph):
+            return "glyph type %s found." % type(glyph).__name__
+
+    @error(INCOMPATIBLE_POLY_EDIT_RENDERER)
+    def _check_compatible_renderers(self):
+        incompatible_renderers = []
+        for renderer in self.renderers:
+            if not isinstance(renderer.glyph, (MultiLine, Patches)):
+                incompatible_renderers.append(renderer)
+        if incompatible_renderers:
+            glyph_types = ', '.join([type(renderer.glyph).__name__
+                                     for renderer in incompatible_renderers])
+            return "%s glyph type(s) found." % glyph_types

@@ -92,7 +92,13 @@ accomplished with the |multi_line| glyph method:
 
 .. note::
     This glyph is unlike most other glyphs. Instead of accepting a one
-    dimensional list or array of scalar values, it accepts a "list of lists".
+    dimensional list or array of scalar values, it accepts a "list of lists"
+    for x and y positions of each line, parameters xs and ys. multi_line
+    also expects a scalar value or a list of scalers per each line for
+    parameters such as color, alpha, linewidth, etc. Similarily, a
+    ColumnDataSource may be used consisting of a "list of lists" and a
+    lists of scalars where the length of the list of scalars and length of
+    lists must match.
 
 Missing Points
 ''''''''''''''
@@ -145,6 +151,28 @@ and left and right endpoints, use the |hbar| glyph function:
     :source-position: above
 
 
+.. userguide_plotting_hex
+
+Hex Tiles
+~~~~~~~~~
+
+Bokeh can plot hexagonal tiles, which are often used for showing binned
+aggregations. The :func:`~bokeh.plotting.figure.Figure.hex_tile` method
+takes a `size` parameter to define the size of the hex grid, and
+`axial coordinates`_ to specify which tiles are present.
+
+.. bokeh-plot:: docs/user_guide/examples/plotting_hex_tile_basic.py
+    :source-position: above
+
+A more realistic example below computes counts per bin using the
+:func:`~bokeh.util.hex.hexbin` funtion and plots the colormapped counts:
+
+.. bokeh-plot:: docs/user_guide/examples/plotting_hex_tile_binning.py
+    :source-position: above
+
+The above code can be made even simpler by calling the :func:`~bokeh.plotting.figure.Figure.hexbin`
+method of ``Figure``.
+
 .. _userguide_plotting_patch_glyphs:
 
 Patch Glyphs
@@ -163,15 +191,21 @@ glyph from one dimensional sequences of *x* and *y* points using the
 Multiple Patches
 ''''''''''''''''
 
-Sometimes it is useful to plot multiple lines all at once. This can be
-accomplished with the |patches| glyph method:
+Sometimes it is useful to plot multiple polygonal patches all at once.
+This can be accomplished with the |patches| glyph method:
 
 .. bokeh-plot:: docs/user_guide/examples/plotting_patch_multiple.py
     :source-position: above
 
 .. note::
     This glyph is unlike most other glyphs. Instead of accepting a one
-    dimensional list or array of scalar values, it accepts a "list of lists".
+    dimensional list or array of scalar values, it accepts a "list of lists"
+    for x and y positions of each patch, parameters xs and ys. patches
+    also expects a scalar value or a list of scalers per each patch for
+    parameters such as color, alpha, linewidth, etc. Similarily, a
+    ColumnDataSource may be used consisting of a "list of lists" and a
+    lists of scalars where the length of the list of scalars and length of
+    lists must match.
 
 Missing Points
 ''''''''''''''
@@ -420,6 +454,8 @@ Adding Annotations
 
 The section on adding annotations to plots has moved.  Please see
 :ref:`userguide_annotations`
+
+.. _axial coordinates: https://www.redblobgames.com/grids/hexagons/#coordinates-axial
 
 .. |bokeh.plotting| replace:: :ref:`bokeh.plotting <bokeh.plotting>`
 .. |Figure| replace:: :class:`~bokeh.plotting.figure.Figure`

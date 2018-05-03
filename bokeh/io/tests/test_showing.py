@@ -13,9 +13,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import pytest ; pytest
 
-from bokeh.util.api import INTERNAL, PUBLIC ; INTERNAL, PUBLIC
-from bokeh.util.testing import verify_api ; verify_api
-
 #-----------------------------------------------------------------------------
 # Imports
 #-----------------------------------------------------------------------------
@@ -31,34 +28,17 @@ from bokeh.io.doc import curdoc
 from bokeh.io.output import output_notebook
 from bokeh.io.state import curstate, State
 from bokeh.models.plots import Plot
+from bokeh.models.renderers import GlyphRenderer
 
 # Module under test
 import bokeh.io.showing as bis
-
-#-----------------------------------------------------------------------------
-# API Definition
-#-----------------------------------------------------------------------------
-
-api = {
-
-    PUBLIC: (
-
-        ( 'show', (1, 0, 0) ),
-
-    ), INTERNAL: (
-
-    )
-
-}
-
-Test_api = verify_api(bis, api)
 
 #-----------------------------------------------------------------------------
 # Setup
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-# Public API
+# General API
 #-----------------------------------------------------------------------------
 
 @patch('bokeh.io.showing._show_with_state')
@@ -113,9 +93,14 @@ def test_show_doesnt_duplicate_if_already_there(m):
     bis.show(p)
     assert curstate().document.roots == [p]
 
+@pytest.mark.parametrize('obj', [1, 2.3, None, "str", GlyphRenderer()])
+@pytest.mark.unit
+def test_show_with_bad_object(obj):
+    with pytest.raises(ValueError):
+        bis.show(obj)
 
 #-----------------------------------------------------------------------------
-# Internal API
+# Dev API
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------

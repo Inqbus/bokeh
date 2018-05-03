@@ -3,7 +3,13 @@
 set -e # exit on error
 set -x # echo commands
 
-py.test -m api
+pushd bokehjs
+node_modules/.bin/gulp scripts:compile --emit-error
+
+node_modules/.bin/gulp test:compile --emit-error
+
+node_modules/.bin/gulp tslint
+popd
 
 py.test -m sampledata
 

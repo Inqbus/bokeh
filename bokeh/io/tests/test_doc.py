@@ -13,9 +13,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import pytest ; pytest
 
-from bokeh.util.api import INTERNAL, PUBLIC ; INTERNAL, PUBLIC
-from bokeh.util.testing import verify_api ; verify_api
-
 #-----------------------------------------------------------------------------
 # Imports
 #-----------------------------------------------------------------------------
@@ -32,37 +29,18 @@ from bokeh.io.state import curstate
 import bokeh.io.doc as bid
 
 #-----------------------------------------------------------------------------
-# API Definition
-#-----------------------------------------------------------------------------
-
-api = {
-
-    PUBLIC: (
-
-        ( 'curdoc', (1, 0, 0) ),
-
-    ), INTERNAL: (
-
-        ( 'set_curdoc', (1, 0, 0) ),
-    )
-
-}
-
-Test_api = verify_api(bid, api)
-
-#-----------------------------------------------------------------------------
 # Setup
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-# Public API
+# General API
 #-----------------------------------------------------------------------------
 
 def test_curdoc_from_curstate():
     assert bid.curdoc() is curstate().document
 
 #-----------------------------------------------------------------------------
-# Internal API
+# Dev API
 #-----------------------------------------------------------------------------
 
 def test_set_curdoc_sets_curstate():

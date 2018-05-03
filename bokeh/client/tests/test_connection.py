@@ -13,9 +13,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import pytest ; pytest
 
-from bokeh.util.api import INTERNAL, PUBLIC ; INTERNAL, PUBLIC
-from bokeh.util.testing import verify_api ; verify_api
-
 #-----------------------------------------------------------------------------
 # Imports
 #-----------------------------------------------------------------------------
@@ -32,44 +29,15 @@ from bokeh.client.states import NOT_YET_CONNECTED
 import bokeh.client.connection as bcc
 
 #-----------------------------------------------------------------------------
-# API Definition
-#-----------------------------------------------------------------------------
-
-api = {
-
-    PUBLIC: (
-
-    ), INTERNAL: (
-
-        ( 'ClientConnection',                     (1, 0, 0) ),
-        ( 'ClientConnection.connected.fget',      (1, 0, 0) ),
-        ( 'ClientConnection.io_loop.fget',        (1, 0, 0) ),
-        ( 'ClientConnection.url.fget',            (1, 0, 0) ),
-        ( 'ClientConnection.connect',             (1, 0, 0) ),
-        ( 'ClientConnection.close',               (1, 0, 0) ),
-        ( 'ClientConnection.force_roundtrip',     (1, 0, 0) ),
-        ( 'ClientConnection.loop_until_closed',   (1, 0, 0) ),
-        ( 'ClientConnection.pull_doc',            (1, 0, 0) ),
-        ( 'ClientConnection.push_doc',            (1, 0, 0) ),
-        ( 'ClientConnection.request_server_info', (1, 0, 0) ),
-        ( 'ClientConnection.send_message',        (1, 0, 0) ),
-
-    )
-
-}
-
-Test_api = verify_api(bcc, api)
-
-#-----------------------------------------------------------------------------
 # Setup
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-# Public API
+# General API
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-# Internal API
+# Dev API
 #-----------------------------------------------------------------------------
 
 class Test_ClientConnection(object):

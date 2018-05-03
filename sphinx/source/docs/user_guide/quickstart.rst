@@ -3,26 +3,27 @@
 Quickstart
 ##########
 
-Introduction
-============
-
-Bokeh is a Python interactive visualization library that targets modern web
+Bokeh is an interactive visualization library that targets modern web
 browsers for presentation. Bokeh provides elegant, concise construction of
-novel graphics with high-performance interactivity over very large or
-streaming datasets in a quick and easy way.
+versatile graphics with high-performance interactivity over very large or
+streaming datasets in a quick and easy way from Python (or other languages).
 
 To offer both simplicity and the powerful and flexible features needed for
 advanced customizations, Bokeh exposes two interface levels to users:
 
-* a *low-level* |bokeh.models| interface that provides the most flexibility to
-  application developers.
-* an *higher-level* |bokeh.plotting| interface centered around composing
-  visual glyphs.
+|bokeh.models|
+    A *low-level* interface that provides the most flexibility to
+    application developers.
+
+|bokeh.plotting|
+    A *higher-level* interface centered around composing visual glyphs.
 
 This Quickstart focuses on the |bokeh.plotting| interface.
 
-Quick Installation
-==================
+.. _userguide_quickstart_install:
+
+Installation
+============
 
 There are multiple ways to install Bokeh, and we recommend the easiest one,
 which is to use the `Anaconda Python distribution`_ and enter this command at
@@ -47,6 +48,8 @@ NumPy, you may instead use ``pip`` at the command line:
 .. note::
     The ``pip`` method does not install the examples. Clone the Git repository
     and look in the ``examples/`` directory of the checkout to see examples.
+
+.. _userguide_quickstart_gettng_started:
 
 Getting Started
 ===============
@@ -88,14 +91,25 @@ directly inline in this document.)
 
 The basic steps to creating plots with the |bokeh.plotting| interface are:
 
-1. Prepare some data (in this case plain python lists).
-2. Tell Bokeh where to generate output (in this case using |output_file|,
-   with the filename ``"lines.html"``).
-3. Call |figure| to create a plot with some overall options like title,
-   tools and axes labels.
-4. Add renderers (in this case, |Figure.line|) for our data, with visual
-   customizations like colors, legends and widths to the plot.
-5. Ask Bokeh to |show| or |save| the results.
+Prepare some data
+    In this case plain python lists, but could also be NumPy arrays or
+    Pandas series.
+
+Tell Bokeh where to generate output
+    In this case using |output_file|, with the filename ``"lines.html"``.
+    Another option is |output_notebook| for use in Jupyter notebooks.
+
+Call |figure|
+    This creates a plot with typical default options and easy customization
+    of title, tools, and axes labels.
+
+Add renderers
+    In this case, we use |Figure.line| for our data, specifying visual
+    customizations like colors, legends and widths.
+
+Ask Bokeh to |show| or |save| the results.
+    These functions save the plot to an HTML file and optionally display it in
+    a browser.
 
 Steps three and four can be repeated to create more than one plot, as shown in
 some of the examples below.
@@ -137,17 +151,20 @@ plot as shown below:
     # show the results
     show(p)
 
+.. _userguide_quickstart_notebooks:
+
 Jupyter Notebooks
 =================
 
-At this point we should mention Jupyter (formerly IPython) notebooks.
+At this point we should mention Jupyter notebooks.
 
 Jupyter notebooks are a fantastic tool for exploratory data analysis, widely
-used across the "PyData" community. Bokeh integrates seamlessly with Jupyter
+used across the SciPy/PyData community. Bokeh integrates seamlessly with Jupyter
 notebooks. To view the above examples in a notebook, you would only
 change |output_file| to a call to |output_notebook| instead.
 
-Many static examples may be viewed directly online at the
+You can interact directly with `live tutorial notebooks`_ hosted online by
+MyBinder. Static versions of these may be viewed at the
 `Bokeh NBViewer Gallery`_.
 
 The `Bokeh GitHub repository`_ also has a number of example notebooks in the
@@ -155,32 +172,27 @@ The `Bokeh GitHub repository`_ also has a number of example notebooks in the
 
 .. code-block:: sh
 
-    ipython notebook
+    jupyter notebook
 
 You can open and interact with any of the notebooks listed in the index page
 that automatically opens up. In particular, you might check out these examples,
 which show how Bokeh can be used together with Jupyter interactive widgets:
 
 :bokeh-tree:`examples/howto/notebook_comms/Jupyter Interactors.ipynb`
+    A basic example that combines Bokeh's interactive capabilities with
+    Jupyter's dropdowns and sliders.
 
 :bokeh-tree:`examples/howto/notebook_comms/Numba Image Example.ipynb`
+    A more advanced example that uses Numba to efficiently perform image
+    processing interactively based on Jupyter widget controls.
 
-Zeppelin Notebooks
-==================
+.. note::
 
-At this point we should mention `Apache Zeppelin`_ notebooks.
+    Note that Bokeh plots cannot be displayed inline in notebook previews on
+    GitHub. Bokeh uses JavaScript code to render plots and GitHub scrubs all
+    JavaScript from previewed content.
 
-`Apache Zeppelin`_ is a web-based notebook that enables interactive data analytics.
-You can make beautiful data-driven, interactive and collaborative documents with
-SQL, Scala and more. It is widely used across the Spark community. Bokeh integrates
-seamlessly with Zeppelin notebooks. To view the above examples in a notebook, you
-would only need change |output_file| to |output_notebook| (notebook_type='zeppelin')
-instead.
-
-The usage of bokeh in Zeppelin notebook is no difference from Jupyter except you
-need to specify notebook_type as zeppelin.
-
-.. _quickstart_other_languages:
+.. _userguide_quickstart_other_languages:
 
 Other Languages
 ===============
@@ -192,7 +204,8 @@ of the other ways to use Bokeh:
 
 * `Bokeh for R`_
 * `Bokeh for Scala`_
-* `Bokeh for Julia`_
+
+.. _userguide_quickstart_sample_data:
 
 Sample Data
 ===========
@@ -204,6 +217,8 @@ commands at a Bash or Windows command prompt:
 .. code-block:: sh
 
     bokeh sampledata
+
+.. _userguide_quickstart_concepts:
 
 Concepts
 ========
@@ -226,7 +241,7 @@ Glyphs are the basic visual marks that Bokeh can display. At the lowest level,
 there are **glyph objects**, such as |Line|. If you are using the low-level
 |bokeh.models| interface, it is your responsibility to create and coordinate
 all the various Bokeh objects, including glyph objects and their data sources.
-To make life easier, the |bokeh.plotting| interface exposes higher level
+To make life easier, the |bokeh.plotting| interface exposes higher-level
 **glyph methods** such as the |Figure.line| method used in the first example.
 The second example also adds in calls to |Figure.circle| to display circle
 and line glyphs together on the same plot. Besides lines and circles, Bokeh
@@ -274,8 +289,10 @@ by passing the argument ``mode="inline"`` to the |output_file| function.
 More examples
 =============
 
-Here are a few more examples to demonstrate other common tasks and use-cases
+Here are a few more examples to demonstrate other common tasks and use cases
 with the |bokeh.plotting| interface.
+
+.. _userguide_quickstart_vectorized:
 
 Vectorized colors and sizes
 ---------------------------
@@ -309,16 +326,18 @@ for in this example:
     # output to static HTML file (with CDN resources)
     output_file("color_scatter.html", title="color_scatter.py example", mode="cdn")
 
-    TOOLS="crosshair,pan,wheel_zoom,box_zoom,reset,box_select,lasso_select"
+    TOOLS = "crosshair,pan,wheel_zoom,box_zoom,reset,box_select,lasso_select"
 
     # create a new plot with the tools above, and explicit ranges
-    p = figure(tools=TOOLS, x_range=(0,100), y_range=(0,100))
+    p = figure(tools=TOOLS, x_range=(0, 100), y_range=(0, 100))
 
     # add a circle renderer with vectorized colors and sizes
-    p.circle(x,y, radius=radii, fill_color=colors, fill_alpha=0.6, line_color=None)
+    p.circle(x, y, radius=radii, fill_color=colors, fill_alpha=0.6, line_color=None)
 
     # show the results
     show(p)
+
+.. _userguide_quickstart_linked:
 
 Linked panning and brushing
 ---------------------------
@@ -423,6 +442,8 @@ Choose the box or lasso select tool, and click and drag to make a
 selection on one plot, which will update the selection on the other
 plot.
 
+.. _userguide_quickstart_datetime:
+
 Datetime axes
 -------------
 
@@ -468,19 +489,21 @@ of interest to look out for in this example:
     # NEW: customize by setting attributes
     p.title.text = "AAPL One-Month Average"
     p.legend.location = "top_left"
-    p.grid.grid_line_alpha=0
+    p.grid.grid_line_alpha = 0
     p.xaxis.axis_label = 'Date'
     p.yaxis.axis_label = 'Price'
-    p.ygrid.band_fill_color="olive"
+    p.ygrid.band_fill_color = "olive"
     p.ygrid.band_fill_alpha = 0.1
 
     # show the results
     show(p)
 
-Bokeh Plot Server
-=================
+.. _userguide_quickstart_server:
 
-Bokeh also comes with an optional server component, the Bokeh Server. It
+Bokeh Application Server
+========================
+
+Bokeh also comes with an optional server component, the Bokeh Server. It is
 possible to create many interesting and interactive visualizations without
 using the Bokeh server, as we have seen above. However, the Bokeh server
 affords many novel and powerful capabilities, including:
@@ -521,6 +544,8 @@ information about how to use the server and write Bokeh server plots
 and apps, consult the :ref:`userguide_server` section of the
 :ref:`userguide`.
 
+.. _userguide_quickstart_next:
+
 What's next?
 ============
 
@@ -537,43 +562,41 @@ information about how to create a new language binding, see the
 To see ready-made examples of how you might use Bokeh with your own data,
 check out the :ref:`gallery`. To see detailed examples and walkthroughs as
 well as find exercises for learning Bokeh by doing, work through the
-:ref:`userguide_tutorials`.
+`live Tutorial notebooks`_.
 
 For questions and technical assistance, come join the `Bokeh mailing list`_.
 
 Visit the `Bokeh GitHub repository`_ and try the examples.
 
-Be sure to follow us on Twitter `@bokehplots <Twitter_>`_, as well as on
-`Vine`_, and `Youtube`_!
+Be sure to follow us on Twitter `@bokehplots <Twitter_>`_ and `Youtube`_!
 
 .. _Anaconda Python distribution: http://anaconda.com/anaconda
-.. _Bokeh for Julia: https://github.com/bokeh/Bokeh.jl
 .. _Bokeh for R: http://hafen.github.io/rbokeh/
 .. _Bokeh for Scala: https://github.com/bokeh/bokeh-scala
 .. _Bokeh GitHub repository: https://github.com/bokeh/bokeh
 .. _Bokeh mailing list: https://groups.google.com/a/anaconda.com/forum/#!forum/bokeh
 .. _Bokeh NBViewer Gallery: http://nbviewer.ipython.org/github/bokeh/bokeh-notebooks/blob/master/index.ipynb
+.. _live Tutorial notebooks: https://mybinder.org/v2/gh/bokeh/bokeh-notebooks/master?filepath=tutorial%2F00%20-%20Introduction%20and%20Setup.ipynb
 .. _Twitter: http://twitter.com/BokehPlots
-.. _Vine: https://vine.co/bokehplots
 .. _YouTube: https://www.youtube.com/channel/UCK0rSk29mmg4UT4bIOvPYhw
 .. _Apache Zeppelin: http://zeppelin.apache.org
 
 .. |bokeh.models|   replace:: :ref:`bokeh.models <bokeh.models>`
-.. |bokeh.plotting| replace:: :ref:`bokeh.plotting <bokeh.plotting>`
+.. |bokeh.plotting| replace:: :ref:`bokeh.plotting <userguide_plotting>`
 
 .. |glyphs|  replace:: :ref:`glyphs <bokeh.models.glyphs>`
 .. |markers| replace:: :ref:`markers <bokeh.models.markers>`
 
-.. |figure| replace:: :func:`~bokeh.plotting.figure`
-.. |Figure| replace:: :class:`~bokeh.plotting.Figure`
+.. |figure| replace:: :func:`~bokeh.plotting.figure.figure`
+.. |Figure| replace:: :class:`~bokeh.plotting.figure.Figure`
 
-.. |legend| replace:: :class:`~bokeh.plotting.Figure.legend`
-.. |grid|   replace:: :class:`~bokeh.plotting.Figure.grid`
-.. |xgrid|  replace:: :class:`~bokeh.plotting.Figure.xgrid`
-.. |ygrid|  replace:: :class:`~bokeh.plotting.Figure.ygrid`
-.. |axis|   replace:: :class:`~bokeh.plotting.Figure.axis`
-.. |xaxis|  replace:: :class:`~bokeh.plotting.Figure.xaxis`
-.. |yaxis|  replace:: :class:`~bokeh.plotting.Figure.yaxis`
+.. |legend| replace:: :class:`~bokeh.plotting.figure.Figure.legend`
+.. |grid|   replace:: :class:`~bokeh.plotting.figure.Figure.grid`
+.. |xgrid|  replace:: :class:`~bokeh.plotting.figure.Figure.xgrid`
+.. |ygrid|  replace:: :class:`~bokeh.plotting.figure.Figure.ygrid`
+.. |axis|   replace:: :class:`~bokeh.plotting.figure.Figure.axis`
+.. |xaxis|  replace:: :class:`~bokeh.plotting.figure.Figure.xaxis`
+.. |yaxis|  replace:: :class:`~bokeh.plotting.figure.Figure.yaxis`
 
 .. |output_file|     replace:: :func:`~bokeh.io.output_file`
 .. |output_notebook| replace:: :func:`~bokeh.io.output_notebook`
@@ -584,10 +607,10 @@ Be sure to follow us on Twitter `@bokehplots <Twitter_>`_, as well as on
 .. |DatetimeAxis|     replace:: :class:`~bokeh.models.axes.DatetimeAxis`
 .. |Line|             replace:: :class:`~bokeh.models.glyphs.Line`
 
-.. |Figure.circle|   replace:: :func:`Figure.circle <bokeh.plotting.Figure.circle>`
-.. |Figure.line|     replace:: :func:`Figure.line <bokeh.plotting.Figure.line>`
-.. |Figure.square|   replace:: :func:`Figure.square <bokeh.plotting.Figure.square>`
-.. |Figure.triangle| replace:: :func:`Figure.triangle <bokeh.plotting.Figure.triangle>`
+.. |Figure.circle|   replace:: :func:`~bokeh.plotting.figure.Figure.circle`
+.. |Figure.line|     replace:: :func:`~bokeh.plotting.figure.Figure.line`
+.. |Figure.square|   replace:: :func:`~bokeh.plotting.figure.Figure.square`
+.. |Figure.triangle| replace:: :func:`~bokeh.plotting.figure.Figure.triangle`
 
 .. |gridplot| replace:: :func:`~bokeh.layouts.gridplot`
 

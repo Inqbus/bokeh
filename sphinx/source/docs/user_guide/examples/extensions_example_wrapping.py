@@ -39,14 +39,9 @@ OPTIONS =
     distance: 1.8
 
 # To create custom model extensions that will render on to the HTML canvas
-# or into the DOM, we must create a View subclass for the model. Currently
-# Bokeh models and views are based on BackBone. More information about
-# using Backbone can be found here:
+# or into the DOM, we must create a View subclass for the model.
 #
-#     http://backbonejs.org/
-#
-# In this case we will subclass from the existing BokehJS ``LayoutDOMView``,
-# corresponding to our
+# In this case we will subclass from the existing BokehJS ``LayoutDOMView``
 export class Surface3dView extends LayoutDOMView
 
   initialize: (options) ->
@@ -65,13 +60,13 @@ export class Surface3dView extends LayoutDOMView
     # already been loaded (e.g. in a custom app template). In the future Bokeh
     # models will be able to specify and load external scripts automatically.
     #
-    # Backbone Views create <div> elements by default, accessible as @el. Many
+    # BokehJS Views create <div> elements by default, accessible as @el. Many
     # Bokeh views ignore this default <div>, and instead do things like draw
     # to the HTML canvas. In this case though, we use the <div> to attach a
     # Graph3d to the DOM.
     @_graph = new vis.Graph3d(@el, @get_data(), OPTIONS)
 
-    # Set Backbone listener so that when the Bokeh data source has a change
+    # Set a listener so that when the Bokeh data source has a change
     # event, we can process the new data
     @connect(@model.data_source.change, () =>
         @_graph.setData(@get_data())
@@ -87,11 +82,10 @@ export class Surface3dView extends LayoutDOMView
         x:     source.get_column(@model.x)[i]
         y:     source.get_column(@model.y)[i]
         z:     source.get_column(@model.z)[i]
-        style: source.get_column(@model.color)[i]
       })
     return data
 
-# We must also create a corresponding JavaScript Backbone model sublcass to
+# We must also create a corresponding JavaScript BokehJS model subclass to
 # correspond to the python Bokeh model subclass. In this case, since we want
 # an element that can position itself in the DOM according to a Bokeh layout,
 # we subclass from ``LayoutDOM``
@@ -113,7 +107,6 @@ export class Surface3d extends LayoutDOM
     x:           [ p.String           ]
     y:           [ p.String           ]
     z:           [ p.String           ]
-    color:       [ p.String           ]
     data_source: [ p.Instance         ]
   }
 """
@@ -141,17 +134,15 @@ class Surface3d(LayoutDOM):
     # server by Python code
     data_source = Instance(ColumnDataSource)
 
-    # The vis.js library that we are wrapping expects data for x, y, z, and
-    # color. The data will actually be stored in the ColumnDataSource, but
-    # these properties let us specify the *name* of the column that should
-    # be used for each field.
+    # The vis.js library that we are wrapping expects data for x, y, and z.
+    # The data will actually be stored in the ColumnDataSource, but these
+    # properties let us specify the *name* of the column that should be
+    # used for each field.
     x = String
 
     y = String
 
     z = String
-
-    color = String
 
 x = np.arange(0, 300, 10)
 y = np.arange(0, 300, 10)
@@ -160,8 +151,8 @@ xx = xx.ravel()
 yy = yy.ravel()
 value = np.sin(xx/50) * np.cos(yy/50) * 50 + 50
 
-source = ColumnDataSource(data=dict(x=xx, y=yy, z=value, color=value))
+source = ColumnDataSource(data=dict(x=xx, y=yy, z=value))
 
-surface = Surface3d(x="x", y="y", z="z", color="color", data_source=source)
+surface = Surface3d(x="x", y="y", z="z", data_source=source, width=600, height=600)
 
 show(surface)

@@ -50,7 +50,7 @@ export class IonRangeSliderView extends InputWidgetView
     @render()
 
   render: () ->
-    # Backbone Views create <div> elements by default, accessible as @$el.
+    # BokehJS Views create <div> elements by default, accessible as @$el.
     # Many Bokeh views ignore this default <div>, and instead do things
     # like draw to the HTML canvas. In this case though, we change the
     # contents of the <div>, based on the current slider value.
@@ -72,23 +72,23 @@ export class IonRangeSliderView extends InputWidgetView
       to: to,
       step: step,
       disable: disable,
-      onChange: @slide,
-      onFinish: @slidestop
+      onChange: (data) => @slide(data),
+      onFinish: (data) => @slidestop(data),
     }
 
-    input = @$el.find('.slider')[0]
-    slider = jQuery(input).ionRangeSlider(opts)
+    inp = @$el.find('.slider')[0]
+    slider = jQuery(inp).ionRangeSlider(opts)
     range = [from, to]
     @$el.find( "##{ @model.id }" ).val( range.join(' - '))
     @$el.find('.bk-slider-parent').height(@model.height)
     return @
 
 
-  slidestop: (data) =>
+  slidestop: (data) ->
     if @model.callback_policy == 'mouseup' or @model.callback_policy == 'throttle'
       @model.callback?.execute(@model)
 
-  slide: (data) =>
+  slide: (data) ->
     range = [data.from, data.to]
     value = range.join(' - ')
     @$el.find( "##{ @model.id }" ).val( value )

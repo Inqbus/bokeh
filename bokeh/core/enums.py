@@ -191,6 +191,10 @@ VerticalLocation = enumeration("above", "below")
 #: Specify a horizontal location in plot layouts
 HorizontalLocation = enumeration("left", "right")
 
+#: Specify an attachment for tooltips
+TooltipAttachment = enumeration("horizontal", "vertical",
+                                "left", "right", "above", "below")
+
 #: Specify a named dashing patter for stroking lines
 DashPattern = enumeration("solid", "dashed", "dotted", "dotdash", "dashdot")
 
@@ -251,6 +255,9 @@ LegendClickPolicy = enumeration("none", "hide", "mute")
 
 #: Whether range padding should be interpreted a percentage or and absolute quantity
 PaddingUnits = enumeration("percent", "absolute")
+
+#: Specify how axis tick labels are oriented with respect to the axis
+TickLabelOrientation = enumeration("horizontal", "vertical", "parallel", "normal")
 
 #: Specify how a format string for a tooltip field should be interpreted
 TooltipFieldFormatter = enumeration("numeral", "datetime", "printf")

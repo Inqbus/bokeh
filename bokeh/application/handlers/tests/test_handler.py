@@ -1,33 +1,73 @@
-from __future__ import absolute_import, print_function
+#-----------------------------------------------------------------------------
+# Copyright (c) 2012 - 2017, Anaconda, Inc. All rights reserved.
+#
+# Powered by the Bokeh Development Team.
+#
+# The full license is in the file LICENSE.txt, distributed with this software.
+#-----------------------------------------------------------------------------
 
-from bokeh.application.handlers.handler import Handler
+#-----------------------------------------------------------------------------
+# Boilerplate
+#-----------------------------------------------------------------------------
+from __future__ import absolute_import, division, print_function, unicode_literals
 
-import pytest
+import pytest ; pytest
 
-def test_create():
-    h = Handler()
-    assert h.failed == False
-    assert h.url_path() is None
-    assert h.static_path() is None
-    assert h.error is None
-    assert h.error_detail is None
+#-----------------------------------------------------------------------------
+# Imports
+#-----------------------------------------------------------------------------
 
-def test_modify_document_abstract():
-    h = Handler()
-    with pytest.raises(NotImplementedError):
-        h.modify_document("doc")
+# Standard library imports
 
-def test_default_hooks_return_none():
-    h = Handler()
-    assert h.on_server_loaded("context") is None
-    assert h.on_server_unloaded("context") is None
-    assert h.on_session_created("context") is None
-    assert h.on_session_destroyed("context") is None
+# External imports
 
-def test_static_path():
-    h = Handler()
-    assert h.static_path() is None
-    h._static = "path"
-    assert h.static_path() == "path"
-    h._failed = True
-    assert h.static_path() is None
+# Bokeh imports
+
+# Module under test
+import bokeh.application.handlers.handler as bahh
+
+#-----------------------------------------------------------------------------
+# Setup
+#-----------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------
+# General API
+#-----------------------------------------------------------------------------
+
+class Test_Handler(object):
+
+    def test_create(self):
+        h = bahh.Handler()
+        assert h.failed == False
+        assert h.url_path() is None
+        assert h.static_path() is None
+        assert h.error is None
+        assert h.error_detail is None
+
+    def test_modify_document_abstract(self):
+        h = bahh.Handler()
+        with pytest.raises(NotImplementedError):
+            h.modify_document("doc")
+
+    def test_default_hooks_return_none(self):
+        h = bahh.Handler()
+        assert h.on_server_loaded("context") is None
+        assert h.on_server_unloaded("context") is None
+        assert h.on_session_created("context") is None
+        assert h.on_session_destroyed("context") is None
+
+    def test_static_path(self):
+        h = bahh.Handler()
+        assert h.static_path() is None
+        h._static = "path"
+        assert h.static_path() == "path"
+        h._failed = True
+        assert h.static_path() is None
+
+#-----------------------------------------------------------------------------
+# Dev API
+#-----------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------
+# Private API
+#-----------------------------------------------------------------------------

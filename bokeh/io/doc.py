@@ -17,8 +17,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 log = logging.getLogger(__name__)
 
-from bokeh.util.api import public, internal ; public, internal
-
 #-----------------------------------------------------------------------------
 # Imports
 #-----------------------------------------------------------------------------
@@ -34,10 +32,9 @@ from bokeh.util.api import public, internal ; public, internal
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
-# Public API
+# General API
 #-----------------------------------------------------------------------------
 
-@public((1,0,0))
 def curdoc():
     ''' Return the document for the current default state.
 
@@ -49,10 +46,9 @@ def curdoc():
     return curstate().document
 
 #-----------------------------------------------------------------------------
-# Internal API
+# Dev API
 #-----------------------------------------------------------------------------
 
-@internal((1,0,0))
 def set_curdoc(doc):
     '''Configure the current document (returned by curdoc()).
 

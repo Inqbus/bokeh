@@ -1,16 +1,57 @@
+import datetime
 from mock import mock
 
 import pandas as pd
 import pytest
 
 from bokeh.models import ColumnDataSource, CDSView, Marker
+from bokeh.models.axes import CategoricalAxis, LinearAxis, LogAxis, MercatorAxis, DatetimeAxis
 from bokeh.models.ranges import Range1d, DataRange1d, FactorRange
 from bokeh.models.scales import LinearScale, LogScale, CategoricalScale
 from bokeh.plotting import Figure
-from bokeh.plotting.helpers import (_get_legend_item_label, _get_scale,
-                                    _get_range, _stack, _graph, _glyph_function,
-                                    _RENDERER_ARGS)
+from bokeh.plotting.helpers import _get_scale,_get_range, _stack, _graph, _glyph_function, _RENDERER_ARGS, _get_axis_class
 
+import bokeh.plotting.helpers as bph
+
+class Test__get_legend_item_label(object):
+
+    def test_legend_None(self):
+        kwargs = {
+            'legend': None
+        }
+        assert bph._get_legend_item_label(kwargs) is None
+
+
+    def test_if_legend_is_something_exotic_that_it_is_passed_directly_to_label(self):
+        kwargs = {
+            'legend': {'field': 'milk'}
+        }
+        label = bph._get_legend_item_label(kwargs)
+        assert label == {'field': 'milk'}
+
+    def test_if_legend_is_a_string_but_no_source_then_label_is_set_as_value(self):
+        kwargs = {
+            'legend': 'label'
+        }
+        label = bph._get_legend_item_label(kwargs)
+        assert label == {'value': 'label'}
+
+    def test_if_legend_is_a_string_and_source_with_that_column_then_field(self):
+        kwargs = {
+            'legend': 'label',
+            'source': ColumnDataSource(dict(label=[1, 2]))
+        }
+        label = bph._get_legend_item_label(kwargs)
+        assert label == {'field': 'label'}
+
+
+    def test_if_legend_is_a_string_and_source_without_column_name_then_value(self):
+        kwargs = {
+            'legend': 'not_a_column_label',
+            'source': ColumnDataSource(dict(label=[1, 2]))
+        }
+        label = bph._get_legend_item_label(kwargs)
+        assert label == {'value': 'not_a_column_label'}
 
 def test__stack_raises_when_spec_in_kwargs():
     with pytest.raises(ValueError) as e:
@@ -125,39 +166,58 @@ def test__graph_properly_handle_edge_property_mixins():
     assert r.hover_glyph.line_width == 23
     assert r.muted_glyph.line_width == 23
 
-# _get_legend_item_label
-def test_if_legend_is_something_exotic_that_it_is_passed_directly_to_label():
-    kwargs = {
-        'legend': {'field': 'milk'}
-    }
-    label = _get_legend_item_label(kwargs)
-    assert label == {'field': 'milk'}
+_RANGES = [Range1d(), DataRange1d(), FactorRange()]
+
+class Test__get_axis_class(object):
+
+    @pytest.mark.parametrize('range', _RANGES)
+    @pytest.mark.unit
+    def test_axis_type_None(self, range):
+        assert(_get_axis_class(None, range, 0)) == (None, {})
+        assert(_get_axis_class(None, range, 1)) == (None, {})
+
+    @pytest.mark.parametrize('range', _RANGES)
+    @pytest.mark.unit
+    def test_axis_type_linear(self, range):
+        assert(_get_axis_class("linear", range, 0)) == (LinearAxis, {})
+        assert(_get_axis_class("linear", range, 1)) == (LinearAxis, {})
+
+    @pytest.mark.parametrize('range', _RANGES)
+    @pytest.mark.unit
+    def test_axis_type_log(self, range):
+        assert(_get_axis_class("log", range, 0)) == (LogAxis, {})
+        assert(_get_axis_class("log", range, 1)) == (LogAxis, {})
+
+    @pytest.mark.parametrize('range', _RANGES)
+    @pytest.mark.unit
+    def test_axis_type_datetime(self, range):
+        assert(_get_axis_class("datetime", range, 0)) == (DatetimeAxis, {})
+        assert(_get_axis_class("datetime", range, 1)) == (DatetimeAxis, {})
+
+    @pytest.mark.parametrize('range', _RANGES)
+    @pytest.mark.unit
+    def test_axis_type_mercator(self, range):
+        assert(_get_axis_class("mercator", range, 0)) == (MercatorAxis, {'dimension': 'lon'})
+        assert(_get_axis_class("mercator", range, 1)) == (MercatorAxis, {'dimension': 'lat'})
+
+    def test_axis_type_auto(self):
+        assert(_get_axis_class("auto", FactorRange(), 0)) == (CategoricalAxis, {})
+        assert(_get_axis_class("auto", FactorRange(), 1)) == (CategoricalAxis, {})
+        assert(_get_axis_class("auto", DataRange1d(), 0)) == (LinearAxis, {})
+        assert(_get_axis_class("auto", DataRange1d(), 1)) == (LinearAxis, {})
+        assert(_get_axis_class("auto", Range1d(), 0)) == (LinearAxis, {})
+        assert(_get_axis_class("auto", Range1d(), 1)) == (LinearAxis, {})
+        assert(_get_axis_class("auto", Range1d(start=datetime.datetime(2018, 3, 21)), 0)) == (DatetimeAxis, {})
+        assert(_get_axis_class("auto", Range1d(start=datetime.datetime(2018, 3, 21)), 1)) == (DatetimeAxis, {})
 
 
-def test_if_legend_is_a_string_but_no_source_then_label_is_set_as_value():
-    kwargs = {
-        'legend': 'label'
-    }
-    label = _get_legend_item_label(kwargs)
-    assert label == {'value': 'label'}
-
-
-def test_if_legend_is_a_string_and_source_with_that_column_then_field():
-    kwargs = {
-        'legend': 'label',
-        'source': ColumnDataSource(dict(label=[1, 2]))
-    }
-    label = _get_legend_item_label(kwargs)
-    assert label == {'field': 'label'}
-
-
-def test_if_legend_is_a_string_and_source_without_column_name_then_value():
-    kwargs = {
-        'legend': 'not_a_column_label',
-        'source': ColumnDataSource(dict(label=[1, 2]))
-    }
-    label = _get_legend_item_label(kwargs)
-    assert label == {'value': 'not_a_column_label'}
+    @pytest.mark.parametrize('range', _RANGES)
+    @pytest.mark.unit
+    def test_axis_type_error(self, range):
+        with pytest.raises(ValueError):
+            _get_axis_class("junk", range, 0)
+        with pytest.raises(ValueError):
+            _get_axis_class("junk", range, 1)
 
 def test__get_scale_numeric_range_linear_axis():
     s = _get_scale(Range1d(), "linear")
@@ -239,8 +299,8 @@ _renderer_args_values = {
     'visible': [None, False, True],
     'muted': [None, False, True]
 }
-@pytest.mark.parametrize('arg,values', [(arg, _renderer_args_values[arg])
-                                        for arg in _RENDERER_ARGS])
+@pytest.mark.parametrize('arg,values', [(arg, _renderer_args_values[arg]) for arg in _RENDERER_ARGS])
+@pytest.mark.unit
 def test__glyph_receives_renderer_arg(arg, values):
     for value in values:
         with mock.patch('bokeh.plotting.helpers.GlyphRenderer', autospec=True) as gr_mock:

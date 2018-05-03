@@ -1,19 +1,45 @@
+#-----------------------------------------------------------------------------
+# Copyright (c) 2012 - 2017, Anaconda, Inc. All rights reserved.
+#
+# Powered by the Bokeh Development Team.
+#
+# The full license is in the file LICENSE.txt, distributed with this software.
+#-----------------------------------------------------------------------------
 ''' Bokeh Application Handler to look for Bokeh server lifecycle callbacks
 in a specified Python module.
 
 '''
-from __future__ import absolute_import, print_function
 
+#-----------------------------------------------------------------------------
+# Boilerplate
+#-----------------------------------------------------------------------------
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+import logging
+log = logging.getLogger(__name__)
+
+#-----------------------------------------------------------------------------
+# Imports
+#-----------------------------------------------------------------------------
+
+# Standard library imports
 import codecs
 import os
 
-from .handler import Handler
+# External imports
+
+# Bokeh imports
+from ...util.callback_manager import _check_callback
 from .code_runner import CodeRunner
+from .handler import Handler
 
-from bokeh.util.callback_manager import _check_callback
+#-----------------------------------------------------------------------------
+# Globals and constants
+#-----------------------------------------------------------------------------
 
-def _do_nothing(ignored):
-    pass
+#-----------------------------------------------------------------------------
+# General API
+#-----------------------------------------------------------------------------
 
 class ServerLifecycleHandler(Handler):
     ''' Load a script which contains server lifecycle callbacks.
@@ -68,16 +94,45 @@ class ServerLifecycleHandler(Handler):
 
             self._runner.run(self._module, extract_callbacks)
 
-    def url_path(self):
-        ''' The last path component for the basename of the path to the
-        callback module.
+    # Properties --------------------------------------------------------------
+
+    @property
+    def error(self):
+        ''' If the handler fails, may contain a related error message.
 
         '''
-        if self.failed:
-            return None
-        else:
-            # TODO should fix invalid URL characters
-            return '/' + os.path.splitext(os.path.basename(self._runner.path))[0]
+        return self._runner.error
+
+    @property
+    def error_detail(self):
+        ''' If the handler fails, may contain a traceback or other details.
+
+        '''
+        return self._runner.error_detail
+
+    @property
+    def failed(self):
+        ''' ``True`` if the lifecycle callbacks failed to execute
+
+        '''
+        return self._runner.failed
+
+    # Public methods ----------------------------------------------------------
+
+    def modify_document(self, doc):
+        ''' This handler does not make any modifications to the Document.
+
+        Args:
+            doc (Document) : A Bokeh Document to update in-place
+
+                *This handler does not modify the document*
+
+        Returns:
+            None
+
+        '''
+        # we could support a modify_document function, might be weird though.
+        pass
 
     def on_server_loaded(self, server_context):
         ''' Execute `on_server_unloaded`` from the configured module (if
@@ -124,38 +179,28 @@ class ServerLifecycleHandler(Handler):
         '''
         return self._on_session_destroyed(session_context)
 
-    def modify_document(self, doc):
-        ''' This handler does not make any modifications to the Document.
-
-        Args:
-            doc (Document) : A Bokeh Document to update in-place
-
-                *This handler does not modify the document*
-
-        Returns:
-            None
+    def url_path(self):
+        ''' The last path component for the basename of the path to the
+        callback module.
 
         '''
-        # we could support a modify_document function, might be weird though.
-        pass
+        if self.failed:
+            return None
+        else:
+            # TODO should fix invalid URL characters
+            return '/' + os.path.splitext(os.path.basename(self._runner.path))[0]
 
-    @property
-    def failed(self):
-        ''' ``True`` if the lifecycle callbacks failed to execute
+#-----------------------------------------------------------------------------
+# Dev API
+#-----------------------------------------------------------------------------
 
-        '''
-        return self._runner.failed
+#-----------------------------------------------------------------------------
+# Private API
+#-----------------------------------------------------------------------------
 
-    @property
-    def error(self):
-        ''' If the handler fails, may contain a related error message.
+def _do_nothing(ignored):
+    pass
 
-        '''
-        return self._runner.error
-
-    @property
-    def error_detail(self):
-        ''' If the handler fails, may contain a traceback or other details.
-
-        '''
-        return self._runner.error_detail
+#-----------------------------------------------------------------------------
+# Code
+#-----------------------------------------------------------------------------

@@ -275,10 +275,8 @@ def build_js():
     sys.stdout.flush()
     os.chdir('bokehjs')
 
-    if sys.platform != "win32":
-        cmd = [join('node_modules', '.bin', 'gulp'), 'build']
-    else:
-        cmd = [join('node_modules', '.bin', 'gulp.cmd'), 'build']
+    gulp = 'gulp' if sys.platform != "win32" else 'gulp.cmd'
+    cmd = [join('node_modules', '.bin', gulp), 'build', '--emit-error']
 
     t0 = time.time()
     try:
@@ -420,7 +418,7 @@ ERROR: subprocess.Popen(%r) failed to execute:
 
     %s
 
-Have you run `npm install` from the bokehjs subdirectory?
+Have you run `npm install --no-save` from the bokehjs subdirectory?
 For more information, see the Dev Guide:
 
     https://bokeh.pydata.org/en/latest/docs/dev_guide.html

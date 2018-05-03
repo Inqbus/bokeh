@@ -73,9 +73,9 @@ any Bokeh model, using the ``js_on_change`` method of Bokeh models:
     p.x_range.js_on_change('start', callback)
 
 It should be mentioned that the first parameter to ``js_on_change`` is the
-name of actually the name of a Backbone event. The full format for a property
+name of actually the name of a BokehJS event. The full format for a property
 change event is, e.g. ``"change:start"`` but Bokeh will automatically
-convert any property name into one of these Backbone change events for you.
+convert any property name into one of these BokehJS change events for you.
 Additionally, some Bokeh models have additional specialized events. For
 example, the ``ColumnDataSource`` also supports ``"patch"`` and ``"stream"``
 events, for executing ``CustomJS`` callbacks whenever the data source is
@@ -229,10 +229,10 @@ CustomJS with a Python function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A CustomJS callback can also be implemented as a Python function, which
-is then translated to JavaScript using PyScript. This makes it easier
+is then translated to JavaScript using PScript. This makes it easier
 for users to define client-side interactions without having to learn
-JavaScript. To use this functionality you need the Flexx library
-(install with ``conda install -c bokeh flexx`` or ``pip install flexx``).
+JavaScript. To use this functionality you need the PScript library
+(install with ``conda install -c conda-forge pscript`` or ``pip install pscript``).
 
 .. warning::
     It is critical to note that **no python code is ever executed when
@@ -240,10 +240,10 @@ JavaScript. To use this functionality you need the Flexx library
     supplied as python code to be translated to JavaScript as described in
     this section. A ``CustomJS`` callback is only executed inside a browser
     JavaScript interpreter, and can only directly interact JavaScript data
-    and functions (e.g., BokehJS Backbone models).
+    and functions (e.g., BokehJS models).
 
 For more information about the subset of Python that is supported in
-callbacks, see the `PyScript documentation`_.
+callbacks, see the `PScript documentation`_.
 
 We recommend using ``window.x`` for variables specific to JavaScript
 to avoid confusion and help static code analysis tools. You can add
@@ -304,4 +304,4 @@ execute on every tap. If you would like to execute a callback on every
 mouse tap, please see :ref:`userguide_interaction_jscallbacks_customjs_interactions`.
 
 .. _CoffeeScript: http://coffeescript.org
-.. _PyScript documentation: http://flexx.readthedocs.org/en/stable/pyscript
+.. _PScript documentation: http://pscript.readthedocs.org

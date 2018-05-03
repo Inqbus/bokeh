@@ -534,7 +534,13 @@ class Any(Property):
             >>> m.prop = [1, 2, 3]
 
     '''
-    pass
+
+class AnyRef(Property):
+    ''' Accept all values and force reference discovery. '''
+
+    @property
+    def has_ref(self):
+        return True
 
 class Interval(ParameterizedProperty):
     ''' Accept numeric values that are contained within a given interval.
@@ -777,7 +783,7 @@ class Auto(Enum):
         return self._sphinx_prop_link()
 
 class RGB(Property):
-    ''' Accept Date (but not DateTime) values.
+    ''' Accept colors.RGB values.
 
     '''
 
@@ -1071,7 +1077,7 @@ class Date(Property):
         if isinstance(value, (float,) + bokeh_integer_types):
             try:
                 value = datetime.date.fromtimestamp(value)
-            except ValueError:
+            except (ValueError, OSError):
                 value = datetime.date.fromtimestamp(value/1000)
         elif isinstance(value, string_types):
             value = dateutil.parser.parse(value).date()

@@ -243,6 +243,42 @@ class TestMarkers(unittest.TestCase):
             p.circle([1, 2, 3], [1, 2, 3], level="bad_input")
 
 
+def test_hbar_stack_returns_renderers():
+    fruits = ['Apples', 'Pears', 'Nectarines', 'Plums', 'Grapes', 'Strawberries']
+    years = ["2015", "2016", "2017"]
+    colors = ["#c9d9d3", "#718dbf", "#e84d60"]
+    data = {'fruits' : fruits,
+        '2015'   : [2, 1, 4, 3, 2, 4],
+        '2016'   : [5, 3, 4, 2, 4, 6],
+        '2017'   : [3, 2, 4, 4, 5, 3]}
+    source = ColumnDataSource(data=data)
+
+    p = plt.figure()
+    renderers = p.hbar_stack(years, y='fruits', height=0.9, color=colors, source=source,
+                         legend=[value(x) for x in years], name=years)
+    assert len(renderers) == 3
+    assert renderers[0].name == "2015"
+    assert renderers[1].name == "2016"
+    assert renderers[2].name == "2017"
+
+def test_vbar_stack_returns_renderers():
+    fruits = ['Apples', 'Pears', 'Nectarines', 'Plums', 'Grapes', 'Strawberries']
+    years = ["2015", "2016", "2017"]
+    colors = ["#c9d9d3", "#718dbf", "#e84d60"]
+    data = {'fruits' : fruits,
+        '2015'   : [2, 1, 4, 3, 2, 4],
+        '2016'   : [5, 3, 4, 2, 4, 6],
+        '2017'   : [3, 2, 4, 4, 5, 3]}
+    source = ColumnDataSource(data=data)
+
+    p = plt.figure()
+    renderers = p.vbar_stack(years, x='fruits', width=0.9, color=colors, source=source,
+                         legend=[value(x) for x in years], name=years)
+    assert len(renderers) == 3
+    assert renderers[0].name == "2015"
+    assert renderers[1].name == "2016"
+    assert renderers[2].name == "2017"
+
 def test_title_kwarg_no_warning(recwarn):
     plt.figure(title="title")
     assert len(recwarn) == 0
@@ -271,19 +307,33 @@ def p():
     return plt.figure()
 
 
-def test_glyph_label_is_legend_if_column_in_datasouurce_is_added_as_legend(p, source):
+def test_glyph_label_is_legend_if_column_in_datasource_is_added_as_legend(p, source):
     p.circle(x='x', y='y', legend='label', source=source)
     legends = p.select(Legend)
     assert len(legends) == 1
     assert legends[0].items[0].label == {'field': 'label'}
 
 
-def test_glyph_label_is_value_if_column_not_in_datasouurce_is_added_as_legend(p, source):
+def test_glyph_label_is_value_if_column_not_in_datasource_is_added_as_legend(p, source):
     p.circle(x='x', y='y', legend='milk', source=source)
     legends = p.select(Legend)
     assert len(legends) == 1
     assert legends[0].items[0].label == {'value': 'milk'}
 
+def test_glyph_label_is_legend_if_column_in_df_datasource_is_added_as_legend(p):
+    source = pd.DataFrame(data=dict(x=[1, 2, 3], y=[1, 2, 3], label=['a', 'b', 'c']))
+    p.circle(x='x', y='y', legend='label', source=source)
+    legends = p.select(Legend)
+    assert len(legends) == 1
+    assert legends[0].items[0].label == {'field': 'label'}
+
+
+def test_glyph_label_is_value_if_column_not_in_df_datasource_is_added_as_legend(p):
+    source = pd.DataFrame(data=dict(x=[1, 2, 3], y=[1, 2, 3], label=['a', 'b', 'c']))
+    p.circle(x='x', y='y', legend='milk', source=source)
+    legends = p.select(Legend)
+    assert len(legends) == 1
+    assert legends[0].items[0].label == {'value': 'milk'}
 
 def test_glyph_label_is_just_added_directly_if_not_string(p, source):
     p.circle(x='x', y='y', legend={'field': 'milk'}, source=source)
@@ -347,3 +397,16 @@ def test_compound_legend_behavior_initiated_if_labels_are_same_on_multiple_rende
     assert len(legends) == 1
     assert legends[0].items[0].renderers == [square, circle]
     assert legends[0].items[0].label == {'field': 'label'}
+
+# XXX (bev) this doesn't work yet because compound behaviour depends on renderer sources
+# matching, but passing a df means every renderer gets its own new source
+# def test_compound_legend_behavior_initiated_if_labels_are_same_on_multiple_renderers_and_are_field_with_df_source(p):
+#     source = pd.DataFrame(data=dict(x=[1, 2, 3], y=[1, 2, 3], label=['a', 'b', 'c']))
+#     # label is a field
+#     square = p.square(x='x', y='y', legend='label', source=source)
+#     circle = p.circle(x='x', y='y', legend='label', source=source)
+#     legends = p.select(Legend)
+#     assert len(legends) == 1
+#     print(legends[0].items[0].renderers)
+#     assert legends[0].items[0].renderers == [square, circle]
+#     assert legends[0].items[0].label == {'field': 'label'}

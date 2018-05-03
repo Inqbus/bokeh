@@ -4,13 +4,14 @@ Bokeh plots
 '''
 from __future__ import absolute_import
 
+from ..core.enums import TickLabelOrientation
 from ..core.has_props import abstract
 from ..core.properties import Auto, Datetime, Dict, Either, Enum, Float, Include, Instance, Int, Override, Seq, String, Tuple
 from ..core.property_mixins import LineProps, TextProps
 
-from .formatters import BasicTickFormatter, CategoricalTickFormatter, DatetimeTickFormatter, LogTickFormatter, TickFormatter
+from .formatters import BasicTickFormatter, CategoricalTickFormatter, DatetimeTickFormatter, LogTickFormatter, TickFormatter, MercatorTickFormatter
 from .renderers import GuideRenderer
-from .tickers import Ticker, BasicTicker, LogTicker, CategoricalTicker, DatetimeTicker, FixedTicker
+from .tickers import Ticker, BasicTicker, LogTicker, CategoricalTicker, DatetimeTicker, FixedTicker, MercatorTicker
 
 @abstract
 class Axis(GuideRenderer):
@@ -145,6 +146,16 @@ class Axis(GuideRenderer):
     main plot area.
     """)
 
+    fixed_location = Either(Float, String, Tuple(String, String), Tuple(String, String, String), default=None, help="""
+    Set to specify a fixed coordinate location to draw the axis. The direction
+    of ticks and major labels is determined by the side panel that the axis
+    belongs to.
+
+    .. note::
+        Axes labels are suppressed when axes are positioned at fixed locations
+        inside the central plot area.
+    """)
+
 @abstract
 class ContinuousAxis(Axis):
     ''' A base class for all numeric, non-categorical axes types.
@@ -171,8 +182,11 @@ class LogAxis(ContinuousAxis):
     formatter = Override(default=lambda: LogTickFormatter())
 
 class CategoricalAxis(Axis):
-    ''' An axis that picks evenly spaced tick locations for a
-    collection of categories/factors.
+    ''' An axis that displays ticks and labels for categorical ranges.
+
+    The ``CategoricalAxis`` can handle factor ranges with up to two levels of
+    nesting, including drawing a seperator line between top-level groups of
+    factors.
 
     '''
     ticker = Override(default=lambda: CategoricalTicker())
@@ -181,14 +195,29 @@ class CategoricalAxis(Axis):
 
     separator_props = Include(LineProps, help="""
     The %s of the separator line between top-level categorical groups.
+
+    This property always applies to factors in the outermost level of nesting.
     """)
 
     separator_line_color = Override(default="lightgrey")
-
     separator_line_width = Override(default=2)
 
     group_props = Include(TextProps, help="""
-    The %s of the group top-level categorical groups.
+    The %s of the group categorical labels.
+
+    This property always applies to factors in the outermost level of nesting.
+    If the list of categorical factors is flat (i.e. no nesting) then this
+    property has no effect.
+    """)
+
+    group_label_orientation = Either(Enum(TickLabelOrientation), Float, default="parallel", help="""
+    What direction the group label text should be oriented.
+
+    If a number is supplied, the angle of the text is measured from horizontal.
+
+    This property always applies to factors in the outermost level of nesting.
+    If the list of categorical factors is flat (i.e. no nesting) then this
+    property has no effect.
     """)
 
     group_text_font_size = Override(default={'value': "8pt"})
@@ -196,12 +225,25 @@ class CategoricalAxis(Axis):
     group_text_color = Override(default="grey")
 
     subgroup_props = Include(TextProps, help="""
-    The %s of the group top-level categorical groups.
+    The %s of the subgroup categorical labels.
+
+    This property always applies to factors in the middle level of nesting.
+    If the list of categorical factors is has only zero or one levels of nesting,
+    then this property has no effect.
+    """)
+
+    subgroup_label_orientation = Either(Enum(TickLabelOrientation), Float, default="parallel", help="""
+    What direction the subgroup label text should be oriented.
+
+    If a number is supplied, the angle of the text is measured from horizontal.
+
+    This property always applies to factors in the middle level of nesting.
+    If the list of categorical factors is has only zero or one levels of nesting,
+    then this property has no effect.
     """)
 
     subgroup_text_font_size = Override(default={'value': "8pt"})
     subgroup_text_font_style = Override(default="bold")
-
 
 class DatetimeAxis(LinearAxis):
     ''' An LinearAxis that picks nice numbers for tick locations on
@@ -213,3 +255,27 @@ class DatetimeAxis(LinearAxis):
     ticker = Override(default=lambda: DatetimeTicker())
 
     formatter = Override(default=lambda: DatetimeTickFormatter())
+
+class MercatorAxis(LinearAxis):
+    ''' An axis that picks nice numbers for tick locations on a
+    Mercator scale. Configured with a ``MercatorTickFormatter`` by default.
+
+    Args:
+        dimension ('lat' or 'lon', optional) :
+            Whether this axis will display latitude or longitude values.
+            (default: 'lat')
+
+    '''
+    def __init__(self, dimension='lat', **kw):
+        super(MercatorAxis, self).__init__(**kw)
+
+        # Just being careful. It would be defeat the purpose for anyone to actually
+        # configure this axis with differnet kinds of tickers or formatters.
+        if isinstance(self.ticker, MercatorTicker):
+            self.ticker.dimension = dimension
+        if isinstance(self.formatter, MercatorTickFormatter):
+            self.formatter.dimension = dimension
+
+    ticker = Override(default=lambda: MercatorTicker())
+
+    formatter = Override(default=lambda: MercatorTickFormatter())
