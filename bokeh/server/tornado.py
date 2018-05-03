@@ -260,6 +260,7 @@ class BokehTornado(TornadoApplication):
         for line in pformat(all_patterns, width=60).split("\n"):
             log.debug("  " + line)
 
+        kwargs['cookie_secret'] = "sdafdsklfdsfdsafkdsafjdskfjsdflksd"
         super(BokehTornado, self).__init__(all_patterns, **kwargs)
 
     def initialize(self, io_loop):
